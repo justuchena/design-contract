@@ -1,6 +1,6 @@
 {
   "name": "@justuchena/no-ai-slop",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A design-doc method, 152 design-system references, and a checker that enforces the rules a machine can hold.",
   "keywords": [
     "design-system",

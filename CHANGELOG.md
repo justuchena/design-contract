@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.1.1 — 2026-10-14
+
+Installable as a Claude Code plugin.
+
+```
+/plugin marketplace add justuchena/no-ai-slop
+/plugin install no-ai-slop
+```
+
+- `.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json`.
+- `skills/no-ai-slop/SKILL.md`, generated from the root `SKILL.md` by
+  `pipeline/derive-skill.mjs` with its link targets repointed two levels up.
+
+  Both locations are needed and neither is negotiable: a cloned skill is read
+  from the clone root, while a plugin's `skills/` directory is what gets
+  scanned, so a root-only `SKILL.md` is never found by a plugin. The copy is
+  derived rather than written twice, for the reason `derive.mjs` exists at
+  all — two hand-maintained copies diverge — and `--check` fails a build when
+  it drifts.
+- The root `SKILL.md` heading still read "Design pack", from before the
+  rename.
+
 ## 0.1.0 — 2026-10-14
 
 First release.
@@ -67,10 +89,4 @@ First release.
   files, so no licence has to be re-verified on your behalf.
 - `SKILL.md` — agent skill entry point, at the repo root so a skill loader
   finds it. `AGENTS.md` is the short form for agents that read that filename.
-- Installable as a Claude Code plugin: `.claude-plugin/plugin.json` and
-  `.claude-plugin/marketplace.json`, with `skills/no-ai-slop/SKILL.md`
-  generated from the root copy by `pipeline/derive-skill.mjs`. A plugin's
-  `skills/` directory is what gets scanned, so a root-only `SKILL.md` is
-  never found by that path; the copy is derived rather than written twice,
-  and `--check` fails a build when it drifts.
 - Inter and Outfit vendored as subset woff2, both SIL OFL 1.1.

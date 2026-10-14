@@ -143,6 +143,76 @@ if (!files.length) {
   process.exit(2);
 }
 
+/**
+ * The rules this engine has, and what in a config turns each one on.
+ *
+ * It exists so the count is *derived*. A hand-maintained list of what the
+ * checker holds rots the same way a hand-maintained design rule does, and I
+ * would rather not demonstrate the problem this repo is named after inside
+ * the file that is supposed to solve it. The report reads this; so does the
+ * test, which asserts the number the README prints.
+ *
+ * `limits` is the half a finding cannot tell you. Every rule prints the
+ * sentence that justifies it, which is the whole argument here — but on one
+ * real audit three rules reported a decision rather than drift, and nothing
+ * in the output hinted that they could not tell the difference. A reader
+ * then either edits correct code or stops trusting the run. So a rule that
+ * has a blind spot now states it, under its own findings, and a config can
+ * add or replace the sentence for a rule it names itself.
+ */
+const RULES = [
+  { name: "palette", on: (c) => c.retiredHues?.length || c.retiredHex?.length || c.banArbitraryColor,
+    limits: "it reads names and literals, so a colour arriving through a variable or a computed class is invisible to it." },
+  { name: "type", on: (c) => c.typeRamp },
+  { name: "icon", on: (c) => c.iconScale,
+    limits: "size is bound to the type beside it, and this only knows the ramp. It cannot tell you a 16 should have been a 14 here." },
+  { name: "state", on: (c) => c.stateOpacity },
+  { name: "contrast", on: (c) => c.contrastFloors?.length,
+    limits: "it matches the class you measured against the ground you measured it on. It does not re-measure, so a token change makes it confidently wrong." },
+  { name: "copy", on: (c) => c.copyBans?.length,
+    limits: "it cannot tell copy from an identifier. A banned string inside a key, a URL or a test name is the false positive to expect." },
+  { name: "tokens", on: (c) => c.tokensDeclaredOnce },
+  { name: "focus", on: (c) => c.focusIndicator,
+    limits: "it accepts any substitute that answers focus. Whether that substitute is *visible enough* is a contrast question it does not ask." },
+  { name: "radius", on: (c) => c.radius,
+    limits: "the tier rules read padding to tell a card from a control, which is a heuristic. A dense card or a roomy button will be read as the other one." },
+  { name: "a11y", on: (c) => c.hitTarget,
+    limits: "the box is computed from padding and the glyph, so a size set in CSS, by a parent, or through a component boundary is not seen. It under-reports." },
+  { name: "reveal", on: (c) => c.hoverReveal,
+    limits: "it checks that focus is answered, not that the control is reachable. A reveal inside something `aria-hidden` still passes." },
+  { name: "motion", on: (c) => c.motionGuards?.length,
+    limits: "it knows the class names you listed. An animation defined in CSS, or one driven by a library, is outside it entirely." },
+  { name: "field", on: (c) => c.fields,
+    limits: "an `id` counts as named, because chasing a label across components is more machinery than this should carry. A field with an id and no matching label passes." },
+  { name: "media", on: (c) => c.imageComponent,
+    limits: "it cannot tell a deliberate raw image from a careless one. Every finding is a candidate for the allowlist, and an allowlist nobody maintains is how this rule turns into noise." },
+  { name: "surface", on: (c) => c.shells?.length,
+    limits: "it cannot tell an object from a region. A full-height pane with its own header is a region, and a flat outlined rectangle is the right treatment for one." },
+  { name: "layout", on: (c) => c.flexShrink,
+    limits: "it reads one class expression, so a parent that is not a flex container, or a height that arrives from CSS, is not considered." },
+  { name: "ink-as-fill", on: (c) => c.inkAsFill?.length,
+    limits: "it fires when a fill token shares an expression with a text token. Text that arrives from a child component is not seen." },
+  { name: "(your bans)", on: (c) => c.bans?.length },
+  { name: "(your element rules)", on: (c) => c.elementRules?.length },
+];
+
+/* The limits actually in play: the engine's, plus anything a config states
+   for a rule it names itself. A config entry wins, because it is closer to
+   the decision. */
+const limitsFor = new Map(RULES.filter((r) => r.limits).map((r) => [r.name, r.limits]));
+for (const key of ["bans", "elementRules", "contrastFloors", "copyBans", "motionGuards", "shells", "inkAsFill"]) {
+  for (const entry of config[key] ?? []) {
+    if (entry.limits && entry.rule) limitsFor.set(entry.rule, entry.limits);
+  }
+}
+for (const [key, name] of Object.entries({
+  typeRamp: "type", iconScale: "icon", stateOpacity: "state", radius: "radius",
+  focusIndicator: "focus", hitTarget: "a11y", hoverReveal: "reveal", fields: "field",
+  imageComponent: "media", flexShrink: "layout", tokensDeclaredOnce: "tokens",
+})) {
+  if (config[key]?.limits) limitsFor.set(name, config[key].limits);
+}
+
 const findings = [];
 const lineAt = (text, index) => text.slice(0, index).split("\n").length;
 const report = (rule, why, place, detail) => findings.push({ rule, why, place, detail });
@@ -928,33 +998,19 @@ for (const rule of config.inkAsFill ?? []) {
 // ── report ──────────────────────────────────────────────────────────────
 const LIMIT = Number(flag("max") ?? 12);
 
+const held = RULES.filter((r) => r.on(config)).map((r) => r.name);
+const off = RULES.filter((r) => !r.on(config)).map((r) => r.name);
+
 if (!findings.length) {
-  /* Named, so the passing line says what was actually held. A green run
-     that does not name its rules is indistinguishable from a green run
-     whose rules all silently stopped firing. */
-  const held = Object.entries({
-    palette: config.retiredHues || config.retiredHex || config.banArbitraryColor,
-    type: config.typeRamp,
-    icon: config.iconScale,
-    radius: config.radius,
-    focus: config.focusIndicator,
-    a11y: config.hitTarget,
-    field: config.fields,
-    reveal: config.hoverReveal,
-    motion: (config.motionGuards || []).length,
-    media: config.imageComponent,
-    surface: (config.shells || []).length,
-    layout: config.flexShrink,
-    "ink-as-fill": (config.inkAsFill || []).length,
-    state: config.stateOpacity,
-    contrast: (config.contrastFloors || []).length,
-    copy: (config.copyBans || []).length,
-    tokens: config.tokensDeclaredOnce,
-  })
-    .filter(([, on]) => on)
-    .map(([name]) => name);
   const n = `${files.length} file${files.length === 1 ? "" : "s"}`;
-  console.log(`✓ design-check: ${n}, nothing drifted (${held.join(", ")}).`);
+  console.log(`✓ design-check: ${n}, nothing drifted.`);
+  console.log(`  held: ${held.join(", ")}`);
+  /* A rule that is off has verified nothing, and a green line that does not
+     say so lets a config with three rules on read exactly like one with
+     twenty. That is the same mistake as a skipped test lane reported as a
+     pass: the output has to distinguish "checked and clean" from "not
+     checked". */
+  if (off.length) console.log(`  off: ${off.join(", ")} — ${off.length} rule(s) verified nothing`);
   process.exit(0);
 }
 
@@ -978,7 +1034,10 @@ for (const [rule, list] of byRule) {
     for (const x of group.slice(0, LIMIT)) console.error(`       ${x.place}  ${x.detail}`);
     if (group.length > LIMIT) console.error(`       … and ${group.length - LIMIT} more`);
   }
+  const limits = limitsFor.get(rule);
+  if (limits) console.error(`     cannot tell: ${limits}`);
   console.error("");
 }
-console.error(`${config.docPath ?? "DESIGN.md"} has the reasoning for each of these.\n`);
+console.error(`${config.docPath ?? "DESIGN.md"} has the reasoning for each of these.`);
+console.error(`${held.length} of ${RULES.length} rules on${off.length ? `; off: ${off.join(", ")}` : ""}.\n`);
 process.exit(1);

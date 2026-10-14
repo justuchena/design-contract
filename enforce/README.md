@@ -98,6 +98,34 @@ fine.
 `--config <path>` points at a different config, `--max <n>` changes how many
 findings print per rule (default 12).
 
+## Every run says what it did not check
+
+Two lines that are not findings, and both exist because of the same mistake.
+
+**`cannot tell: …`**, printed under a rule's own findings. Every rule prints
+the sentence that justifies it, which is the argument this whole repo makes.
+But on one audit of a real tree, three rules reported a *decision* rather
+than drift: a pane that is correctly a flat outlined region, a box-shadow
+drawing a crop scrim rather than an elevation, and six deliberate raw images
+each already carrying a comment arguing the case. Nothing in the output
+suggested the rule could not tell the difference, so a reader is left to
+either edit code that was right or stop believing the run. Both are worse
+than the rule not existing. Every rule now states its blind spot beside its
+claim, and `limits` in the config overrides or adds one.
+
+**`off: …`**, on the passing line. A rule that is off has verified nothing,
+and a green line that does not say so lets a config with one rule enabled
+read exactly like one with all of them. That is the same error as a skipped
+test lane reported as a pass, and the fix is the same: the output has to
+distinguish *checked and clean* from *not checked*.
+
+The rule count in the report is derived from the engine's own registry rather
+than written down, and `enforce/test.mjs` asserts that the number in
+`README.md` and `SKILL.md` matches it. A hand-maintained list of what the
+checker holds rots exactly the way a hand-maintained design rule does, and
+this repo should not demonstrate its own problem in the file meant to solve
+it.
+
 ## Three decisions that make it usable
 
 **Comments are stripped before every rule runs.** A checker that fires on the

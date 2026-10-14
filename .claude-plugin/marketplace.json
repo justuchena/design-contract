@@ -1,7 +1,7 @@
 {
   "name": "no-ai-slop",
   "description": "A design-doc method, the state rules that decide whether an interface tells the truth, 152 design-system references, and a checker that enforces the rules a machine can hold.",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "owner": {
     "name": "Uchenna Ngozi",
     "url": "https://github.com/justuchena"

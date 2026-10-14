@@ -183,6 +183,26 @@ export default {
     instead: "answer focus-visible and group-focus-within as well as hover",
   },
 
+  /* ── `limits`, on any rule ──────────────────────────────────────────────
+     Every rule above prints the sentence that justifies it. Each one can
+     also carry a `limits` sentence, printed under its own findings as
+     `cannot tell: …`, and the engine ships one for every rule it owns.
+
+     This is worth more than it looks. On one real audit three rules
+     reported a *decision* rather than drift — a pane that is correctly a
+     flat outlined region, a box-shadow drawing a crop scrim rather than an
+     elevation, six deliberate raw images — and nothing in the output
+     suggested the rule could not tell the difference. A reader in that
+     position either edits code that was right, or stops believing the run.
+     Both are worse than the rule not existing.
+
+     So state the blind spot next to the claim. Override the engine's
+     sentence, or add one for a rule you named yourself:
+
+       bans: [{ rule: "signal", pattern: "…", why: "…",
+                limits: "it cannot see the token arriving through a prop." }],
+     ──────────────────────────────────────────────────────────────────── */
+
   /* Reduced-motion rules are written one class name at a time, so a
      hand-rolled utility animation is covered by none of them.
      `motion-safe:` is accepted, because it never starts at all. */

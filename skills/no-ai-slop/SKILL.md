@@ -120,7 +120,7 @@ cp enforce/design-check.config.example.mjs design-check.config.mjs
 node enforce/design-check.mjs
 ```
 
-Twenty rules, in two halves. What a surface **looks like**: retired hues by
+19 rules, in two halves. What a surface **looks like**: retired hues by
 name and by hex, arbitrary colour classes, element-scoped bans (pure-white
 plates, hard seams between sections), measured contrast floors, the type
 ramp, the icon scale, the disabled pair, an arbitrary radius, copy bans, and

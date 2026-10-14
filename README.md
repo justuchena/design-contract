@@ -13,7 +13,7 @@ locally plausible and globally incoherent.
 [![node](https://img.shields.io/badge/node-%E2%89%A518-brightgreen.svg)](package.json)
 [![dependencies: none](https://img.shields.io/badge/dependencies-none-brightgreen.svg)](package.json)
 [![design systems: 152](https://img.shields.io/badge/design%20systems-152-blue.svg)](refs/INDEX.md)
-[![checker rules: 20](https://img.shields.io/badge/checker%20rules-20-blue.svg)](enforce/README.md)
+[![checker rules: 19](https://img.shields.io/badge/checker%20rules-19-blue.svg)](enforce/README.md)
 [![self-checked](https://img.shields.io/badge/self--checked-npm%20run%20verify-brightgreen.svg)](enforce/test.mjs)
 
 [Premise](#the-premise) · [Method](#1-method--write-the-specification) ·
@@ -172,7 +172,7 @@ node enforce/design-check.mjs
        src/row.tsx:32  icon-only <button> with no accessible name
 ```
 
-**Twenty rules, in two halves.** What a surface *looks like*: retired hues by
+**19 rules, in two halves.** What a surface *looks like*: retired hues by
 name and by hex, arbitrary colour classes, flat bans, element-scoped bans,
 measured contrast floors, the type ramp, the icon scale, the disabled pair,
 an arbitrary radius, copy bans, and one-declaration-per-token.

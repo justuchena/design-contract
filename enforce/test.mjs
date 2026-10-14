@@ -16,6 +16,7 @@
  * `accept="image/*"` attribute that once ate half a file.
  */
 import { execFileSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -182,6 +183,47 @@ check(
   countFor("layout") === 2,
   "one side-stripe and one unshrinkable scroller, and not the fixed pane",
 );
+
+/* What the run could NOT tell you, which is the half a `why` leaves out.
+   On one real audit three rules reported a decision rather than drift and
+   nothing in the output hinted that they could not tell the difference. A
+   reader then either edits correct code or stops trusting the run. */
+console.log("\nlimits, and coverage");
+check(
+  "a rule with a blind spot states it, under its own findings",
+  /── surface \(1\) ──[\s\S]*?cannot tell: it cannot tell an object from a region/.test(out),
+  "the surface rule's blind spot is the one that cost the most on a real tree",
+);
+check(
+  "the limits line is not mistaken for a finding",
+  !/cannot tell:.*\.tsx:\d+/.test(out),
+  "it carries no file and no line",
+);
+check(
+  "the failing report says how many rules were on",
+  /\b(\d+) of (\d+) rules on\b/.test(out),
+  "a run that does not say what it covered cannot be read",
+);
+
+/* A rule that is off has verified nothing. A green line that does not say so
+   lets a config with one rule on read exactly like one with all of them,
+   which is the same mistake as a skipped test lane reported as a pass. */
+/* The engine is the source of truth for how many rules there are, and the
+   docs are checked against it rather than trusted. A hand-maintained count
+   of what the checker holds rots exactly the way a hand-maintained design
+   rule does, and this repo should not demonstrate its own problem. */
+console.log("\nthe rule count is derived, not asserted in prose");
+const engineCount = Number(out.match(/\b\d+ of (\d+) rules on\b/)?.[1] ?? -1);
+check("the engine reports a rule count", engineCount > 0, `got ${engineCount}`);
+for (const doc of ["README.md", "SKILL.md"]) {
+  const text = readFileSync(join(HERE, "..", doc), "utf8");
+  const claimed = [...text.matchAll(/\b(\d+) rules\b/g)].map((m) => Number(m[1]));
+  check(
+    `${doc} claims the number the engine actually has`,
+    claimed.length > 0 && claimed.every((n) => n === engineCount),
+    `doc says ${claimed.join("/") || "nothing"}, engine says ${engineCount}`,
+  );
+}
 
 console.log("\nreport shape");
 check("each rule prints its justification", /── palette \(3\) ──\n\s+A retired hue/.test(out));

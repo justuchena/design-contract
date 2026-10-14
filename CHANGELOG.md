@@ -1,5 +1,44 @@
 # Changelog
 
+## 0.2.1 — 2026-10-15
+
+What a run cannot tell you, and the package becoming installable.
+
+All three of these came out of pointing v0.2.0 at a 2,082-file application
+and fixing every one of the 63 things it found. Four of those were the
+checker's fault rather than the codebase's, and that is what is fixed here.
+
+### The report says what it did not check
+
+- **`cannot tell: …`**, under each rule's findings. Three rules reported a
+  decision rather than drift on that tree: a pane correctly drawn as a flat
+  outlined region, a box-shadow drawing a crop scrim rather than an
+  elevation, and six deliberate raw images, three already carrying a comment
+  arguing the case. Each finding printed the sentence that justified the rule
+  and nothing about what the rule could not see — so the reader either edits
+  correct code or stops trusting the run, and both are worse than the rule
+  not existing. Every rule now ships a blind-spot sentence, and `limits` on
+  any config entry overrides or adds one.
+- **`off: …`**, on the passing line. A rule that is off has verified nothing,
+  and a green run that does not say so lets a config with one rule enabled
+  read exactly like one with nineteen. The same error as a skipped test lane
+  reported as a pass.
+- **The rule count is derived from a registry in the engine**, and the test
+  asserts that the number printed in `README.md` and `SKILL.md` matches it.
+  It was wrong already: both said twenty where the engine has nineteen. A
+  hand-maintained list of what the checker holds rots exactly the way a
+  hand-maintained design rule does, which is not a thing this repo should
+  demonstrate inside the file meant to solve it.
+
+### Installable
+
+- **`refs/` is out of the npm `files` array.** The tarball was 32.3 MB and
+  4,080 files, because 152 reference packages were being shipped to anyone
+  who wanted to run one dependency-free script. Nobody can take that as a
+  devDependency, and on the real application above it had to be vendored
+  instead. Now 445 kB and 39 files. The refs are still in the repo and still
+  in a plugin install, because that path is a clone.
+
 ## 0.2.0 — 2026-10-14
 
 The interaction half, and the states.

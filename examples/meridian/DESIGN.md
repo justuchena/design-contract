@@ -188,6 +188,43 @@ The exception: the data-processing agreement, where "data subject" and
 "processor" are defined terms doing real work. Precision beats warmth in a
 document somebody signs.
 
+## States
+
+Method in [`states.md`](../../method/states.md). **Branch on `ready`, not on
+`not failed`**, and every surface that reads a roster has four:
+
+| Branch | Claims | What it draws |
+|---|---|---|
+| loading | nothing | `<ShiftSkeleton>`, which holds the week grid's shape |
+| ready and empty | *nobody is scheduled* | the empty state, with its one coded illustration |
+| ready and full | the happy path | the grid |
+| failed | *I could not find out* | `<ReadFailed>`, with a retry and no illustration |
+
+**The empty state and the failed state may never share a string**, and this
+product is the reason the rule is written this way round. The roster's empty
+copy was "No shifts need cover this week." On a failed read that sentence is
+not a blank screen, it is a practice manager going home. The two branches now
+sit in different components so they cannot converge again by edit.
+
+An empty state is a claim, and nobody reads it as one.
+
+### Destructive actions
+
+Two guards, and the test for which one is whether the action reaches past the
+person clicking.
+
+- **An undo window** for anything inside one manager's own week: deleting a
+  shift, clearing a day, moving a block. Reversible, and a confirmation on
+  each would make the common case unusable.
+- **A confirmation** for removing a staff member, revoking an invitation, and
+  publishing a roster. The first two reach somebody else's access. The third
+  sends eleven notifications and cannot be recalled.
+
+The undo window is 8 seconds and it **actually restores**, including the
+cover assignments the deleted shift held. An undo that reports success
+without restoring is worse than no undo: it is the only one of these faults
+that destroys data *and* tells you it did not.
+
 ## Spacing rhythm
 
 4px base. Sections step on 8: `8 / 16 / 24 / 32 / 48 / 64`.
@@ -200,6 +237,36 @@ Two sanctioned exceptions, both measured rather than felt:
   gap holding seven columns in a viewport that does not have room for 4.
 
 A rhythm with no exceptions listed is a rhythm with undocumented exceptions.
+
+## Breakpoints, and what moves at each
+
+Stock Tailwind widths, unmodified, and the config has no `screens` key on
+purpose: a custom set means every reader who knows the framework has to look
+them up, and nothing here has needed a width the defaults do not offer.
+
+| | width | what actually changes |
+|---|---|---|
+| `sm` | 640px | the biggest single break. The day stack becomes a row, padding grows one step |
+| `md` | 768px | grid columns, and a few widths. The quietest of the four |
+| `lg` | 1024px | **the shell boundary** — see below |
+| `xl` | 1280px | a seventh column on the week grid, and nothing else |
+| `2xl` | 1536px | unused, deliberately. The content column stops growing before it |
+
+**`lg` is not a size, it is which application mounts.** Below it Meridian
+renders a different shell: a day at a time with a date pager, not a week
+grid, because a seven-column table on a phone is a horizontal scroll nobody
+uses between patients. The decision is a live media-query hook
+(`useIsNarrow()`), read on every change rather than once, because a manager
+who rotates the phone expects the week back. Nothing about that is
+expressible as a responsive utility, so it would not be written down anywhere
+if it were not written down here.
+
+**A pointer is not a width.** Targets are 44px under `coarse:`, which is a
+property of the pointer and not of the viewport: the clinic's 1280px
+touchscreen desk machine takes the desktop layout and still needs the large
+target, and a phone in a desktop browser's device toolbar has a fine pointer
+at 390px. `coarse:` is never a substitute for a breakpoint and a breakpoint
+is never a substitute for it.
 
 ## Elevation
 
@@ -350,3 +417,112 @@ standing rejections, which reference sites keep arguing for:
 - **Hand-drawn illustration.** The grammar above is flat and stroked. Mixing
   is the two-products problem.
 - **Gradient anything.** Not text, not buttons, not backgrounds.
+
+## Traps
+
+The things that look right and are not. Every entry here cost somebody an
+afternoon, and each symptom points away from its cause.
+
+- **`--signal-short` means "this shift is uncovered", and a second consumer
+  destroys that.** A chip is how an uncovered shift is identified
+  product-wide, so the token landing anywhere else makes the colour stop
+  meaning anything. This one is held as a `bans` rule with a single scoped
+  exemption naming `shift-chip.tsx`, which is the shape worth copying: a ban
+  everywhere plus one argued hole beats a rule that lives in prose and is
+  broken by the second person who needs a warm red.
+- **The week grid's 2px gap is a sanctioned exception, not the base unit.**
+  It reads as drift in a diff and it is in the spacing section for exactly
+  that reason. Anything else at 2px is drift.
+- **`<Seam>` takes no props and must not gain one.** A seam with options is a
+  border with extra steps, and the first option proposed was a colour, which
+  is the whole decision reversed.
+- **The avatar's radius is `rounded-full`, not the 8px law.** A circle is not
+  a radius decision, so a sweep that normalises every radius to 8 will turn
+  every avatar into a rounded square and every reviewer will approve it,
+  because individually each diff looks correct.
+
+## Verification
+
+```bash
+npx tsc --noEmit                                     # types
+npx vitest run                                       # tests
+node enforce/design-check.mjs                        # this document, held
+node pipeline/contrast.mjs examples/meridian/palette.json   # the table above
+node pipeline/derive.mjs examples/meridian/tokens.css --check
+```
+
+Everything in this document that a machine can check is in
+`design-check.config.mjs`, and every rule there names the section above it
+enforces. The split: the checker takes geometry, colour, punctuation and the
+measured floors; this document keeps composition, register and intent.
+
+**Then render it and look at it, narrow first.** No checker catches a section
+that is one card too long, and on this product the narrow width is not a
+smaller layout, it is a different application.
+
+## The agent quick reference
+
+Everything needed to build a correct surface here without reading the
+document above.
+
+> **If this block and the body disagree, the body wins.** It carries the
+> reasoning, and a compressed rule that has lost its reason is how a design
+> system decays.
+
+These are the values in [`tokens.css`](tokens.css), which is the source. If
+they disagree with that file, the file wins and this block is stale.
+
+```css
+/* grounds — the page is never pure white */
+--paper: #fcfcfa;   /* default plate     */
+--tint:  #f3f4ef;   /* alternating plate */
+--ink:   #15161a;   /* dark OBJECT only, never a section */
+
+/* one accent, 30 to 60% of emphasised surface. White on it is 7.49:1 */
+--accent: #1f5f4e;  --accent-700: #174a3d;   /* -700 is hover and pressed only */
+
+/* neutrals, measured against both grounds in the palette table above */
+--fg: #111318;  --fg-muted: #3d424d;  --fg-subtle: #6b7280;
+
+/* signals — status only, never brand, never decoration */
+--signal-short: #a8432f;  --signal-pending: #8a6318;
+```
+
+**`#9aa1ad` is the one that fails.** It is the untokened grey, it measures
+2.53:1 on paper, and the palette table above carries it as the step that
+fails and what to use instead. It is repeated here because the quick
+reference is exactly where somebody reaches for a lighter grey.
+
+**Banned:** a second accent · gradient anything · `#ffffff` as a page tone ·
+a dark *section* · a display face · shadow for emphasis · a card grid for
+shifts · centred paragraphs · star ratings or invented metrics.
+
+| Role | Token | Size | Weight | Tracking |
+|---|---|---|---|---|
+| Page h1 | `text-2xl` | 24px | 600 | `-0.02em` |
+| Section h2 | `text-xl` | 20px | 600 | `-0.015em` |
+| Body | `text-base` | 15px, not 16: 16 costs a column | 400 | `-0.005em` |
+| Chip / label | `text-xs` | 13px | 500 | `0` |
+
+**21px is not in the ramp on purpose.** It is the wordmark, measured against
+the mark's stroke weight, and the pair breaks if it moves.
+
+```
+radius    8px, everywhere. rounded-full on avatars only.
+emphasis  border-color: --accent. Never a shadow.
+elevation --shadow-pop, popovers only. Nothing else floats.
+spacing   4px base, sections on 8. Exceptions: 6 label/field, 2 chip gap.
+seam      <Seam /> between sections. No props.
+motion    --dur-fast 120ms (a control) · --dur-pop 180ms (a popover)
+          --ease-out cubic-bezier(.2,.8,.25,1). Honours reduced motion.
+states    ready, not not-failed. Four branches, and failed never borrows
+          the empty state's words.
+undo      8s, and it restores. Confirm anything reaching past the clicker.
+```
+
+**Copy:** no em dashes anywhere a visitor can read. Plain register, never
+clinical-systems jargon. No invented metrics, no star ratings, no fake
+screenshots.
+
+**Narrow is a different application, not a smaller one.** Below `lg` it is a
+day with a pager, not a week grid.

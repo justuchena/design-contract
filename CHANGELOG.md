@@ -1,5 +1,109 @@
 # Changelog
 
+## 0.2.0 — 2026-10-14
+
+The interaction half, and the states.
+
+Auditing this pack against the project it was extracted from found that the
+published checker shipped ten of the fifteen rules that project actually
+runs, and that the five missing families were the generic ones: focus,
+pointer targets, labels. The README claimed the checker held "the rules a
+machine can hold" while a machine was holding half again as many elsewhere.
+That gap is closed here.
+
+### The checker — ten new rules, twenty in total
+
+Every one of these was a rule a design document already claimed and nothing
+ran.
+
+- `focus` — an indicator suppressed with nothing put back. Reads the whole
+  class expression and stands down when a substitute answers focus, because
+  suppressing the outline and replacing it is a decision rather than a
+  leftover. `focus-visible:` is in the pattern: checking `focus:` alone let
+  through the one variant that removes the ring on precisely the interaction
+  it exists for.
+- `radius` — an arbitrary radius, plus optional two-tier rules where padding
+  rather than the element decides whether something is a card or a control.
+- `a11y` — a pointer target under 24px (WCAG 2.2 §2.5.8), computed from the
+  padding map and the glyph size, and an icon-only control with no accessible
+  name. An explicit height stands the rule down.
+- `reveal` — an affordance that answers hover and not focus, which leaves a
+  keyboard on an invisible control. `pointer-events-none` is exempt.
+- `motion` — an animation no `prefers-reduced-motion` rule covers.
+  `motion-safe:` is accepted as the stronger guard, since it never starts.
+- `field` — a placeholder used as a label (WCAG 2.2 §3.3.2), a native date
+  picker showing the OS locale rather than the app's, and the field radius.
+- `media` — a raw `<img>`, which renders the browser's broken glyph on a dead
+  URL and so reads as the product being broken.
+- `surface` — a hand-rolled shell where the doc specifies a component. The
+  commonest form of locally plausible and globally incoherent there is.
+- `layout` — a `flex-1` scroller with no `min-h-0`, which does not shrink
+  below its content, grows past its frame, and gives an `h-full` child a
+  second scrollbar inside the first.
+- `ink-as-fill` — a token meant for type, border and ring used as a ground
+  under text. Invisible in one theme and unreadable in the other, so every
+  screenshot looks fine.
+
+- Two new machinery pieces behind them: whole-class-expression matching, and
+  an ancestor walk. The second earned its place by correcting a rule that
+  reported thirteen correctly labelled fields as nameless, because their
+  label was a wrapper taking a `label` prop. The test is the prop, not the
+  element.
+- The fixture is now two components and 27 findings across 5 files, laid out
+  in pairs: positive case, then the deliberate pattern beside it. Every one
+  of those negative cases was reported by an early version of the rule it
+  sits next to, and `enforce/test.mjs` asserts all of them.
+
+### Fixed
+
+- **The report printed one argument over findings it did not justify.** A
+  rule name can carry several `why` sentences — a `layout` group holding both
+  the side-stripe ban and the flex-shrink fault is the normal case — and the
+  reporter printed only the first. Findings are now grouped by rule and then
+  by argument, each above its own lines. This repo's whole claim is that
+  every rule is traceable to the sentence that earned it, so this was the one
+  thing the report could not be allowed to do.
+- The passing line names the rules that were actually held, derived from the
+  config, rather than a hardcoded list. A green run that does not name its
+  rules is indistinguishable from a green run whose rules all silently
+  stopped firing.
+- The worked example's new quick-reference block carried invented hex values
+  and a contrast ratio that did not match `palette.json`. Corrected against
+  the source, which is the drift this repo exists to catch, found in its own
+  example.
+
+### The method
+
+- `method/states.md` — new, and the dimension the pack was silent on: not
+  whether a surface looks designed, but whether it is honest. The four
+  branches every reading surface has, the invariant that keeps them apart
+  (**branch on `ready`, not on `not failed`**), destructive-action guards,
+  and the finding behind all of it: a read that failed rendering the
+  surface's empty state, which is a wrong branch rather than a missing one,
+  stated in the voice the product reserves for true things.
+- `method/DESIGN-TEMPLATE.md` gains five sections: **States**,
+  **Breakpoints** (including the behavioural break, and why a pointer is not
+  a width), **Traps** (the things that look right and are not), a
+  **Verification** command block, and **The agent quick reference** — a
+  compressed block with the rule that makes it safe: *if this block and the
+  body disagree, the body wins.* Spacing now asks for a measured census
+  rather than a declared scale.
+- `method/references.md` gains the positive thesis it was missing. The pack
+  said what not to lift and never said what to make instead: pages feel
+  designed because they ship **authored artwork and texture** — icons
+  somebody drew, arrows somebody sketched, backgrounds somebody composed —
+  rather than library glyphs on flat fills. Plus the technique that produced
+  the best reference notes, which is reading a site at the asset and
+  stylesheet level rather than by eye.
+- `SKILL.md` and `AGENTS.md` carry the states invariant, two new bans
+  (invented social proof, and the centred-hero-plus-three-cards composite),
+  and **the four lanes** — because the devices reassemble even when each one
+  is individually avoided, and a lane you did not choose is slop even when
+  the lane is beautiful.
+- `examples/meridian/` demonstrates all five new template sections, with its
+  signal-token rule now actually enforced by a `bans` entry and one scoped
+  exemption rather than asserted in prose.
+
 ## 0.1.1 — 2026-10-14
 
 Installable as a Claude Code plugin.

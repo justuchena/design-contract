@@ -2,8 +2,9 @@
 
 # no-ai-slop
 
-**A design-doc method, 152 design-system references, and a checker that
-enforces the rules a machine can hold.**
+**A design-doc method, the state rules that decide whether an interface
+tells the truth, 152 design-system references, and a checker that enforces
+the rules a machine can hold.**
 
 For anyone building frontends with an AI agent and getting back work that is
 locally plausible and globally incoherent.
@@ -12,6 +13,7 @@ locally plausible and globally incoherent.
 [![node](https://img.shields.io/badge/node-%E2%89%A518-brightgreen.svg)](package.json)
 [![dependencies: none](https://img.shields.io/badge/dependencies-none-brightgreen.svg)](package.json)
 [![design systems: 152](https://img.shields.io/badge/design%20systems-152-blue.svg)](refs/INDEX.md)
+[![checker rules: 20](https://img.shields.io/badge/checker%20rules-20-blue.svg)](enforce/README.md)
 [![self-checked](https://img.shields.io/badge/self--checked-npm%20run%20verify-brightgreen.svg)](enforce/test.mjs)
 
 [Premise](#the-premise) · [Method](#1-method--write-the-specification) ·
@@ -105,6 +107,20 @@ dashes anywhere a visitor can read, and one deliberately chosen register.
 Writing is half of why an interface reads as generated, and nobody puts it
 under a rule.
 
+**[`method/states.md`](method/states.md) — whether the interface is telling
+the truth.** The four branches every surface that reads something has, and
+the one invariant that keeps them apart: **branch on `ready`, not on `not
+failed`.** This is the dimension that is missing from every design doc I have
+read, including the ones I wrote. A model writes the happy path, then the
+empty state, and then `data?.items ?? []` turns "the request did not come
+back" into "you have none" — a *wrong* branch rather than a missing one,
+stated in the voice the product reserves for true things. Auditing four
+applications for that one shape found a false all-clear on a moderation
+queue, seven public pages telling visitors their link was dead, and an Undo
+that replaced a week with nothing and reported success. All of them had an
+empty state. That was the problem. *If what you are building is an
+application rather than a page, read this before the visual rules.*
+
 [`examples/meridian/`](examples/meridian/) is a complete filled-in design doc
 for an invented product, with **real measured contrast ratios**, so you can
 see a finished one before writing your own.
@@ -141,22 +157,37 @@ node enforce/design-check.mjs
 ```
 
 ```
-✗ design-check: 14 finding(s) in 3 files
+✗ design-check: 27 finding(s) in 5 files
 
   ── palette (3) ──
      A retired hue is still in the tree.
-     src/bad.tsx:6  bg-violet-500 — violet is retired
-     src/bad.tsx:6  #4f46e5 — retired, and a literal cannot follow the theme
+       src/bad.tsx:6  bg-violet-500 — violet is retired
+     A retired hue as a literal.
+       src/bad.tsx:6  #4f46e5 — retired, and a literal cannot follow the theme
 
-  ── contrast (1) ──
-     Below the 4.5:1 text floor and the 3:1 floor for a meaningful icon.
-     src/bad.tsx:5  text-gray-400 is 2.37:1 — use text-gray-500, or aria-hidden
+  ── a11y (2) ──
+     WCAG 2.2 §2.5.8 asks 24px of any pointer target.
+       src/row.tsx:23  22px pointer target — p-1 around a 14px glyph
+     An icon-only control has no text for a screen reader to read.
+       src/row.tsx:32  icon-only <button> with no accessible name
 ```
 
-Eleven rule kinds: retired hues **by name and by hex**, arbitrary colour
-classes, flat bans, element-scoped bans, measured contrast floors, the type
-ramp, the icon scale, the disabled pair, copy bans, and
-one-declaration-per-token. Every rule prints the sentence that justifies it.
+**Twenty rules, in two halves.** What a surface *looks like*: retired hues by
+name and by hex, arbitrary colour classes, flat bans, element-scoped bans,
+measured contrast floors, the type ramp, the icon scale, the disabled pair,
+an arbitrary radius, copy bans, and one-declaration-per-token.
+
+And whether it *can be used*, which is the half a design doc forgets: a focus
+indicator suppressed with nothing put back, a pointer target under 24px, an
+icon-only control with no accessible name, an affordance that answers hover
+and not focus, an animation no `prefers-reduced-motion` rule covers, a
+placeholder used as a label, a native date picker, a raw `<img>` with no
+fallback, a hand-rolled card shell where the doc specifies a component, a
+`flex-1` scroller with no `min-h-0`, and a token meant for type used as a
+ground under text.
+
+Every rule prints the sentence that justifies it, and every one is off until
+you turn it on.
 
 <details>
 <summary><strong>Three decisions that make it survive a real codebase</strong></summary>
@@ -170,10 +201,20 @@ literals — because a regex for `/*` cannot tell a comment from
 `accept="image/*"`, and getting that wrong blanks half a file and reports
 true statements about text that does not exist.
 
-**Some rules read one element, not the file.** A *card* may be pure white; a
-*section plate* may not. A divider inside a card is fine; between two
-sections it is banned. A flat grep cannot express the distinction a design
-doc actually makes.
+**Some rules read one element, not the file — and some read a node's
+ancestors.** A *card* may be pure white; a *section plate* may not. A divider
+inside a card is fine; between two sections it is banned. A flat grep cannot
+express the distinction a design doc actually makes.
+
+The ancestor walk earned its place: the field rule without it reported
+thirteen correctly labelled fields as nameless, because their label was a
+local `<Row label="Name">` whose body is a `<label>` wrapping the children.
+That association is real, implicit, and crosses a component boundary no regex
+over one file can follow. The interaction rules also read a *whole class
+expression* rather than a line, because the contradiction they look for
+(`opacity-0` with a hover answer and no focus answer) survives being
+formatted across five lines, and a line-wise check reports the file that is
+correct.
 
 **It refuses to check composition.** Whether a section earns its place,
 whether a headline is any good. A check with an opinion about taste produces

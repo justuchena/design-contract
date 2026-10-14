@@ -1,6 +1,6 @@
 ---
 name: no-ai-slop
-description: Build frontend UI that does not read as generated. Use when designing or implementing any web interface, component, page, landing page, dashboard or app surface; when setting up a design system or design tokens; when writing or enforcing a design doc; when asked to review UI for quality, consistency, contrast or accessibility; or when a reference site or screenshot is being used as inspiration. Carries a design-doc method, 152 real design-system references, and a configurable checker that enforces the rules a machine can hold.
+description: Build frontend UI that does not read as generated. Use when designing or implementing any web interface, component, page, landing page, dashboard or app surface; when setting up a design system or design tokens; when writing or enforcing a design doc; when asked to review UI for quality, consistency, contrast or accessibility; or when a reference site or screenshot is being used as inspiration. Carries a design-doc method, the state and honesty rules that decide whether an interface tells the truth, 152 real design-system references, and a configurable checker that enforces the rules a machine can hold.
 license: see LICENSE and NOTICE at the repo root
 ---
 
@@ -54,6 +54,23 @@ Read [`method/voice.md`](../../method/voice.md) whenever writing
 user-visible copy. Both rules there — no em dashes, one deliberate register —
 do more to stop the generated register than any visual rule.
 
+**If what is being built is an application rather than a page, read
+[`method/states.md`](../../method/states.md) too, and read it before the visual
+rules.** It covers the dimension this skill used to be silent on: not whether
+a surface looks designed, but whether it is honest. The headline is one
+invariant and it is worth carrying everywhere:
+
+> **Branch on `ready`, not on `not failed`.**
+
+Because the fourth branch is the one that gets skipped. A model writes the
+happy path, then the empty state, and then `data?.items ?? []` quietly turns
+"the request did not come back" into "you have none" — which is not a missing
+branch but a *wrong* one, stated in the voice the product reserves for true
+things. On one audit of four applications that single shape produced a false
+all-clear on a moderation queue, seven public pages telling visitors their
+link was dead, and an Undo that replaced a week with nothing and reported
+success. Every one of them had an empty state. That was the problem.
+
 ## Step 2 — Build against references, carefully
 
 [`refs/`](../../refs/) holds 152 design-system packages. Each has
@@ -103,11 +120,24 @@ cp enforce/design-check.config.example.mjs design-check.config.mjs
 node enforce/design-check.mjs
 ```
 
-Rules available: retired hues by name and by hex, arbitrary colour classes,
-element-scoped bans (pure-white plates, hard seams between sections),
-measured contrast floors, the type ramp, the icon scale, the disabled pair,
-copy bans, and one-declaration-per-token. Each prints the sentence that
-justifies it.
+Twenty rules, in two halves. What a surface **looks like**: retired hues by
+name and by hex, arbitrary colour classes, element-scoped bans (pure-white
+plates, hard seams between sections), measured contrast floors, the type
+ramp, the icon scale, the disabled pair, an arbitrary radius, copy bans, and
+one-declaration-per-token.
+
+And whether it **can be used**, which is the half a design doc forgets: a
+focus indicator suppressed with nothing put back, a pointer target under
+24px, an icon-only control with no accessible name, an affordance that
+answers hover and not focus, an animation no `prefers-reduced-motion` rule
+covers, a placeholder used as a label, a native date picker, a raw `<img>`
+with no fallback, a hand-rolled card shell where the doc specifies a
+component, a `flex-1` scroller with no `min-h-0`, and a token meant for type
+used as a ground under text.
+
+Each prints the sentence that justifies it. The config turns every one of
+them off by default, and the question to ask before turning one on is
+whether you can point at the section of your design doc it enforces.
 
 **The split, and it is load-bearing:**
 
@@ -149,6 +179,34 @@ that reliably marks work as generated:
 - **Centred body copy.** Headings may centre; paragraphs do not.
 - **Emoji as UI iconography.**
 - **Dark as a full-width section** rather than as a contained object.
+- **Invented social proof.** No star ratings, no made-up metrics, no fake
+  product screenshots, no "trusted by thousands". Everything else on this
+  list makes a page look generated. This one makes it dishonest, and it is
+  the easiest of the lot to produce by accident, because a placeholder
+  testimonial is exactly what filling a layout asks for.
+- **Centred hero copy over a gradient, with three cards under it.** Named
+  separately from its parts because the parts reassemble: the real unit of
+  generated design is the *lane*, not the device.
+
+## The four lanes, which are what the bans are really about
+
+A page converges on a lane even when it avoids every device on the list
+above, so name the lanes you are not building:
+
+- **Standard SaaS landing.** Gradient hero, three-card features,
+  testimonial carousel, pricing tower.
+- **Bootcamp marketing.** Transformation copy, stock photos of people
+  smiling at laptops, "join thousands of graduates".
+- **AI-design template.** Glassmorphism, blue-to-purple gradient text,
+  identical card shapes, a hero metric nobody measured.
+- **Editorial-typographic.** Display serif, italic standfirst, drop caps,
+  ruled column grid. This one is on the list because it is *good* and
+  because it is not a default — it is a deliberate lane, and converging on
+  it by accident is the same failure as the other three.
+
+The last is the useful one to think about: a lane you did not choose is slop
+even when the lane is beautiful. Write down which one you are in, and the
+three you are not, in your design doc's reference section.
 
 ## Files
 
@@ -157,6 +215,7 @@ that reliably marks work as generated:
 | `method/DESIGN-TEMPLATE.md` | The design doc template. Start here. |
 | `method/references.md` | Structure vs device. Read before using any reference. |
 | `method/voice.md` | The two standing copy rules. |
+| `method/states.md` | The four branches, and whether the interface is honest. |
 | `enforce/design-check.mjs` | The checker. |
 | `enforce/design-check.config.example.mjs` | Every rule, annotated, off by default. |
 | `pipeline/contrast.mjs` | Contrast matrix, scoped per ground. |

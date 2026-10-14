@@ -49,6 +49,31 @@ Two rules, both in [`method/voice.md`](method/voice.md):
    is for and who it affects, not how it is built. If the reader would have
    to look a word up, it does not ship.
 
+## When the surface reads something
+
+Full argument in [`method/states.md`](method/states.md). The short form:
+
+**Branch on `ready`, not on `not failed`.** Every surface that reads has four
+branches, and the fourth is the one that gets skipped:
+
+- **loading** claims nothing. A skeleton holding the shape the content will
+  take, not a spinner in the middle of nothing.
+- **ready and empty** claims *there is none*. That is a factual assertion
+  about the world and it has to be earned.
+- **ready and full** is the happy path.
+- **failed** claims *I could not find out*. Different words, a retry, and
+  never the empty state's words.
+
+`data?.items ?? []` collapses the fourth into the second, which is a wrong
+branch rather than a missing one: the surface says "you have none" in the
+voice it reserves for true things. **An empty state is a claim, and nobody
+reads it as one.**
+
+For a destructive action: an undo window when the action is reversible, a
+confirmation when it is irreversible, and always a confirmation when it
+reaches past the person clicking. An undo that does not actually restore is
+worse than no undo.
+
 ## Before reporting the work done
 
 ```bash
@@ -74,11 +99,28 @@ Each of these reliably marks work as generated:
 - Centred body copy
 - Emoji as UI iconography
 - Dark as a full-width section rather than a contained object
+- Invented social proof: star ratings, made-up metrics, fake product
+  screenshots, "trusted by thousands". This one is dishonest rather than
+  merely generic, and a placeholder testimonial is exactly what filling a
+  layout asks for.
+
+And the four lanes, which is what the list above is really about, because the
+parts reassemble even when each one is avoided: standard SaaS landing;
+bootcamp marketing; AI-design template (glassmorphism, blue-to-purple
+gradient text, identical cards, an unmeasured hero metric); and
+editorial-typographic. The last is on the list because it is *good* and
+because converging on it by accident is the same failure as the other three.
+A lane you did not choose is slop even when the lane is beautiful.
 
 ## What not to do with the checker
 
-`enforce/design-check.mjs` holds geometry, colour, punctuation and measurable
-floors. It deliberately does **not** check composition, hierarchy or taste.
+`enforce/design-check.mjs` holds geometry, colour, punctuation, measurable
+floors, and the interaction rules a machine can decide: the focus indicator,
+pointer targets, accessible names on icon-only controls, hover-only
+affordances, unguarded animation, fields, raw images, hand-rolled shells and
+the `flex-1` shrink fault. It deliberately does **not** check composition,
+hierarchy or taste — and it cannot check whether an empty state would be a
+lie on failure, which is why the states rules are read rather than run.
 
 Do not add a rule you cannot trace to a section of the design doc. A rule
 with no argument behind it produces noise, and noise teaches people to pass

@@ -12,15 +12,49 @@ node enforce/design-check.mjs
 cd enforce/fixture && node ../design-check.mjs
 ```
 
-Expect **14 findings in 3 files**. The fixture is a deliberately broken
-component, and the interesting part is what it does *not* report: the comment
-at the top of `src/violations.tsx` names a retired hue and uses an em dash,
-and the `accept="image/*"` attribute below it is the exact shape that once
-caused a comment to swallow half a file. Neither is reported. The
-`aria-hidden` span is not reported either.
+Expect **27 findings in 5 files**, and `node enforce/test.mjs` asserts all of
+it. The fixture is two deliberately broken components, and the interesting
+part is what it does *not* report: the comment at the top of
+`src/violations.tsx` names a retired hue and uses an em dash, and the
+`accept="image/*"` attribute below it is the exact shape that once caused a
+comment to swallow half a file. Neither is reported, and nor is the
+`aria-hidden` span.
 
-If you add a rule, add a line to that fixture. A rule with no fixture is a
-rule that silently stops working.
+`src/interaction.tsx` is laid out in pairs, positive case then negative:
+an outline suppressed with nothing put back beside one suppressed *with* a
+substitute; a hover reveal with no focus answer beside one that has it; a
+field with a placeholder beside a field whose label wraps it and which has no
+`id` at all. Every one of those negative cases was reported by an early
+version of the rule beside it. They are the assertions that matter, because
+any regex catches the violation and the hard part is leaving the deliberate
+pattern alone.
+
+If you add a rule, add a pair to that fixture. A rule with no fixture is a
+rule that silently stops working, and that is worse than no rule, because you
+believe you are covered.
+
+## It was checked against a real tree, not only the fixture
+
+The interaction rules are ports of rules that had already run for months on a
+1,268-file application, and the port was verified by running both versions
+over that tree and diffing. `a11y`, `reveal`, `motion`, `media`, `focus` and
+`ink-as-fill` agree exactly, down to the same files, the same lines and the
+same computed pixel values (`22px pointer target — p-1 around a 14px glyph`).
+
+Two rules find **more** than the originals, and the reason is the whole-class-
+expression matching described below. The original matchers stopped at the
+first quote, so a class list written as `className={[...].join(" ")}` or as a
+template literal with an interpolated constant was invisible to them: eight
+more hand-rolled shells and one more unshrinkable scroller, each confirmed by
+reading the file. Writing long class lists as an array is completely normal,
+so those were not edge cases, they were a blind spot over a whole formatting
+style.
+
+Worth stating because it is the pack's own argument turned on itself: the
+original rules were right, ran in CI, and still missed real instances of
+exactly what they were looking for. A rule that runs is necessary. It is not
+sufficient, and the thing to check is not whether it fires but what it cannot
+see.
 
 ## The rules
 
@@ -37,6 +71,29 @@ rule that silently stops working.
 | `state` | A disabled opacity that is not one of the sanctioned values | `stateOpacity` |
 | `copy` | Punctuation and wording banned in user-visible text | `copyBans[]` |
 | `tokens` | The same custom property declared in two sheets | `tokensDeclaredOnce` |
+
+Those hold what a surface looks like. These hold whether it can be used, and
+they are the half a design doc forgets:
+
+| Rule | What it catches | Config key |
+|---|---|---|
+| `focus` | An indicator suppressed with nothing put back | `focusIndicator` |
+| `radius` | An arbitrary radius, and a container radius on a control | `radius` |
+| `a11y` | A pointer target under 24px, and an icon-only control with no name | `hitTarget` |
+| `reveal` | An affordance that answers hover and not focus | `hoverReveal` |
+| `motion` | An animation no `prefers-reduced-motion` rule covers | `motionGuards[]` |
+| `field` | A placeholder used as a label, a native picker, a field radius | `fields` |
+| `media` | A raw `<img>`, which has no fallback for a dead URL | `imageComponent` |
+| `surface` | A hand-rolled shell where the doc specifies a component | `shells[]` |
+| `layout` | A `flex-1` scroller with no `min-h-0` | `flexShrink` |
+| `ink-as-fill` | A token meant for type, used as a ground under text | `inkAsFill[]` |
+
+Every one of these was a rule a design document already claimed and nothing
+ran. The last two are the ones worth reading the config comments for: a
+hand-rolled shell is the commonest form of *locally plausible and globally
+incoherent* there is, and a type token used as a fill is a contrast failure
+that is invisible in one theme, so every screenshot anybody took looked
+fine.
 
 `--config <path>` points at a different config, `--max <n>` changes how many
 findings print per rule (default 12).
@@ -56,6 +113,23 @@ literals, because a regex for `/*` cannot tell a comment from
 white; a section plate may not. A divider inside a card is fine; between two
 sections it is banned. `elementRules` reads an element's open tag, brace-aware
 so `className={cond ? a : b}` does not end the tag early.
+
+**Some read a whole class expression, and one reads a node's ancestors.** The
+interaction rules are mostly about a *contradiction inside one expression* —
+`opacity-0` with a hover answer and no focus answer, an outline removed with
+nothing substituted — and a line-wise check gets every one of them wrong the
+moment somebody formats a long class list across five lines, which is the
+normal way to write a long one. It then reports a file that is correct, and
+the fix a reader applies makes it worse.
+
+The ancestor walk exists for one rule and earned its place: the field rule
+without it reported thirteen correctly labelled fields as nameless, because
+their label was a local `<Row label="Name">` whose body is a `<label>`
+wrapping the children. That association is real, it is implicit, and it
+crosses a component boundary no regex over one file can follow. So the test
+is the *prop*, not the element — an ancestor taking a `label=` is naming what
+it wraps, and a wrapper that accepts a `label` and fails to render one is a
+bug belonging to the wrapper's own tests.
 
 **It refuses to check composition.** Whether a section earns its place,
 whether the tonal arc reads, whether a headline is good. Those need

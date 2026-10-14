@@ -1,0 +1,21 @@
+{
+  "name": "Meridian — every foreground against the grounds it is for",
+  "grounds": {
+    "paper": "#fcfcfa",
+    "tint": "#f3f4ef",
+    "ink": "#15161a"
+  },
+  "foregrounds": {
+    "fg": { "value": "#111318", "requires": "text", "on": ["paper", "tint"] },
+    "fg-muted": { "value": "#3d424d", "requires": "text", "on": ["paper", "tint"] },
+    "fg-subtle": { "value": "#6b7280", "requires": "text", "on": ["paper", "tint"] },
+    "untokened": "#9aa1ad",
+    "accent": { "value": "#1f5f4e", "requires": "ui", "on": ["paper", "tint"] },
+    "accent-700": { "value": "#174a3d", "requires": "ui", "on": ["paper", "tint"] },
+    "signal-short": { "value": "#a8432f", "requires": "text", "on": ["paper", "tint"] },
+    "signal-pending": { "value": "#8a6318", "requires": "text", "on": ["paper", "tint"] },
+    "on-ink": { "value": "#fcfcfa", "requires": "text", "on": ["ink"] },
+    "on-ink-muted": { "value": "#9aa1ad", "requires": "text", "on": ["ink"] },
+    "on-accent": { "value": "#ffffff", "requires": "text", "on": [] }
+  }
+}

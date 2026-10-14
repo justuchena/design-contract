@@ -1,0 +1,27 @@
+/* Meridian tokens. The source; design-tokens.json is derived from this.
+   Retired, kept as a comment so nobody reintroduces it: --accent: #14b8a6; */
+:root {
+  --paper: #fcfcfa;
+  --tint: #f3f4ef;
+  --ink: #15161a;
+  --accent: #1f5f4e;
+  --accent-700: #174a3d;
+  --fg: #111318;
+  --fg-muted: #3d424d;
+  --fg-subtle: #6b7280;
+  --signal-short: #a8432f;
+  --signal-pending: #8a6318;
+  --radius: 8px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-6: 24px;
+  --font-sans: Inter, system-ui, sans-serif;
+  --text-base: 15px;
+  --leading-base: 24px;
+  --tracking-base: -0.005em;
+  --shadow-pop: 0 8px 24px -8px rgb(17 19 24 / 0.18);
+  --dur-fast: 120ms;
+  --dur-pop: 180ms;
+  --ease-out: cubic-bezier(.2,.8,.25,1);
+}
+.dark { --paper: #15161a; --fg: #fcfcfa; }

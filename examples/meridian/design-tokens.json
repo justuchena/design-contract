@@ -1,0 +1,167 @@
+{
+  "$description": "Derived from tokens.css by pipeline/derive.mjs. Do not edit by hand.",
+  "color": {
+    "paper": {
+      "$value": "#fcfcfa",
+      "$type": "color",
+      "$extensions": {
+        "org.designpack.cssVar": "--paper"
+      }
+    },
+    "tint": {
+      "$value": "#f3f4ef",
+      "$type": "color",
+      "$extensions": {
+        "org.designpack.cssVar": "--tint"
+      }
+    },
+    "ink": {
+      "$value": "#15161a",
+      "$type": "color",
+      "$extensions": {
+        "org.designpack.cssVar": "--ink"
+      }
+    },
+    "accent": {
+      "$value": "#1f5f4e",
+      "$type": "color",
+      "$extensions": {
+        "org.designpack.cssVar": "--accent"
+      }
+    },
+    "accent-700": {
+      "$value": "#174a3d",
+      "$type": "color",
+      "$extensions": {
+        "org.designpack.cssVar": "--accent-700"
+      }
+    },
+    "fg": {
+      "$value": "#111318",
+      "$type": "color",
+      "$extensions": {
+        "org.designpack.cssVar": "--fg"
+      }
+    },
+    "fg-muted": {
+      "$value": "#3d424d",
+      "$type": "color",
+      "$extensions": {
+        "org.designpack.cssVar": "--fg-muted"
+      }
+    },
+    "fg-subtle": {
+      "$value": "#6b7280",
+      "$type": "color",
+      "$extensions": {
+        "org.designpack.cssVar": "--fg-subtle"
+      }
+    },
+    "signal-short": {
+      "$value": "#a8432f",
+      "$type": "color",
+      "$extensions": {
+        "org.designpack.cssVar": "--signal-short"
+      }
+    },
+    "signal-pending": {
+      "$value": "#8a6318",
+      "$type": "color",
+      "$extensions": {
+        "org.designpack.cssVar": "--signal-pending"
+      }
+    }
+  },
+  "dimension": {
+    "radius": {
+      "$value": "8px",
+      "$type": "dimension",
+      "$extensions": {
+        "org.designpack.cssVar": "--radius"
+      }
+    },
+    "space-1": {
+      "$value": "4px",
+      "$type": "dimension",
+      "$extensions": {
+        "org.designpack.cssVar": "--space-1"
+      }
+    },
+    "space-2": {
+      "$value": "8px",
+      "$type": "dimension",
+      "$extensions": {
+        "org.designpack.cssVar": "--space-2"
+      }
+    },
+    "space-6": {
+      "$value": "24px",
+      "$type": "dimension",
+      "$extensions": {
+        "org.designpack.cssVar": "--space-6"
+      }
+    }
+  },
+  "typography": {
+    "font-sans": {
+      "$value": "Inter, system-ui, sans-serif",
+      "$type": "other",
+      "$extensions": {
+        "org.designpack.cssVar": "--font-sans"
+      }
+    },
+    "text-base": {
+      "$value": "15px",
+      "$type": "dimension",
+      "$extensions": {
+        "org.designpack.cssVar": "--text-base"
+      }
+    },
+    "leading-base": {
+      "$value": "24px",
+      "$type": "dimension",
+      "$extensions": {
+        "org.designpack.cssVar": "--leading-base"
+      }
+    },
+    "tracking-base": {
+      "$value": "-0.005em",
+      "$type": "dimension",
+      "$extensions": {
+        "org.designpack.cssVar": "--tracking-base"
+      }
+    }
+  },
+  "shadow": {
+    "shadow-pop": {
+      "$value": "0 8px 24px -8px rgb(17 19 24 / 0.18)",
+      "$type": "shadow",
+      "$extensions": {
+        "org.designpack.cssVar": "--shadow-pop"
+      }
+    }
+  },
+  "motion": {
+    "dur-fast": {
+      "$value": "120ms",
+      "$type": "duration",
+      "$extensions": {
+        "org.designpack.cssVar": "--dur-fast"
+      }
+    },
+    "dur-pop": {
+      "$value": "180ms",
+      "$type": "duration",
+      "$extensions": {
+        "org.designpack.cssVar": "--dur-pop"
+      }
+    },
+    "ease-out": {
+      "$value": "cubic-bezier(.2,.8,.25,1)",
+      "$type": "duration",
+      "$extensions": {
+        "org.designpack.cssVar": "--ease-out"
+      }
+    }
+  }
+}

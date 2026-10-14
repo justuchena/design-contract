@@ -114,11 +114,69 @@ this is where it is banned.*
 and why they work. Put your own standing copy rules here — the ones that
 apply to every string a visitor can read, not per-page tone notes.*
 
+## States
+
+*See [`states.md`](./states.md), which is the longest argument in this pack
+and the one I would read first if the thing being built is an application
+rather than a page.*
+
+*What goes here: the four branches every surface that reads something has
+(loading, ready and empty, ready and full, failed), what each one is allowed
+to claim, and the invariant that keeps them apart. Mine is one line:*
+**branch on `ready`, not on `not failed`.**
+
+*Then your destructive-action rule: which actions take a confirmation, which
+take an undo window, and the test for choosing. Mine is whether the action
+reaches past the person clicking.*
+
+*This is the section a generated interface is most likely to be missing
+entirely, and the one whose absence does real damage rather than merely
+looking generic. An empty state is a claim, and a failed read that renders it
+is a lie told in the voice the product reserves for true things.*
+
 ## Spacing rhythm
 
 *The base unit, the section rhythm, and the two or three spacings that are
 allowed to break it. A rhythm with no exceptions listed is a rhythm with
 undocumented exceptions.*
+
+*If you can, measure it rather than declaring it: count the uses of each step
+across your source and write the counts in. A census tells you what the
+default actually is, which is usually not the step you would have named, and
+it turns "use the scale" into a table somebody can check themselves against.
+It also surfaces the real property worth documenting. On one app the
+half-steps below 12px are used heavily and that is not sloppiness: the type
+ramp there runs 10 to 15px, and a scale that jumps 8 to 16 has nothing to
+offer a 30px control. Above 12 the steps are 4px apart and the halves
+disappear, which is the tell that the two halves of the scale are doing
+different jobs.*
+
+## Breakpoints, and what moves at each
+
+*The table, and a count per breakpoint if you can measure one. Two things
+belong here that are easy to leave as behaviour spread across files:*
+
+*First, whether you are using your framework's stock widths. Mine are
+unmodified and should stay that way: a custom set means every reader who
+already knows the framework has to look them up, and nothing I have built has
+needed a width the defaults do not offer. If you did change them, this is
+where the argument goes.*
+
+*Second, and this is the one worth the section: say whether any of your
+breakpoints is **behavioural rather than layout**. On one app, one of them is
+not a size at all, it is which application mounts: below it the product
+renders a different shell, with a tab bar and an index/detail push, decided by
+a live media-query hook rather than by a class. Nothing about that is
+expressible as a responsive utility, so if it is not written down here it is
+not written down anywhere.*
+
+*And the trap, which is worth stating even if nothing in your app does it
+yet: **a pointer is not a width.** A touch target is a property of the
+pointer, not of the viewport. A 1280px touchscreen laptop takes the desktop
+layout and still needs a 44px target, and a phone in a desktop browser's
+device toolbar has a fine pointer at 390px. If your framework has a
+coarse-pointer variant, it is never a substitute for a breakpoint and a
+breakpoint is never a substitute for it.*
 
 ## Elevation
 
@@ -190,3 +248,75 @@ where the source is.*
 *The standing answer to "but this other site does X". See
 [`references.md`](./references.md). List the specific things reference sites
 will keep arguing for and that you have already rejected.*
+
+## Traps
+
+*The things that look right and are not. This section is cheap to write and
+it is the one that saves the most time, because every entry is a bug somebody
+has already spent an afternoon on.*
+
+*What qualifies: a failure whose symptom points away from its cause. Mine,
+from one app, are all of this shape:*
+
+- *A display face that is **opt-in** rather than set on the heading elements,
+  so a heading that forgets to apply it renders in the body face and looks
+  almost right. "Looks almost right" is the whole category.*
+- *A brand mark whose stroke weight is in viewBox units, so changing the
+  mark's height silently stops its stroke matching the type beside it.*
+- *A `Button` component that is **not this product's button**: it has no
+  page consumers, it compiles against a different token layer, and its
+  default variant comes out near-black. Somebody will find it before they
+  find the real one, because it has the obvious name.*
+- *A build-tool line excluding a directory from the stylesheet, so anything
+  rendered from that directory comes out as unstyled HTML.*
+
+*Write yours as you hit them. A trap discovered and not written down will be
+discovered again, by you, in four months.*
+
+## Verification
+
+*The commands. Not a description of them, the commands themselves, so that
+"check before committing" is a thing somebody can paste.*
+
+```bash
+# types, tests, lint, and the design checker
+node enforce/design-check.mjs
+```
+
+*Then the rule that makes the section worth having: **anything in this
+document that a machine can check belongs in the checker, and the checker
+belongs in CI.** A rule that only lives here is a rule that drifts. See
+[`../enforce/`](../enforce/) for what is holdable; the split is that the
+checker takes geometry, colour, punctuation and measurable floors, and this
+document keeps composition, register and intent.*
+
+*If your pipeline has a step that is easy to forget and expensive to miss,
+name it here too. Mine is that a green local run is not a green CI run, for a
+reason specific to that repo's environment handling, and writing that down
+once saved a fortnight of red builds.*
+
+## The agent quick reference
+
+*Put this last, and write it only once the document above is finished.*
+
+*It is a compressed block holding everything needed to build a correct
+surface without reading the whole document: the palette as values, the type
+ramp as a table, the geometry classes, the motion tokens, the copy rules in
+one line each, and the commands. Half a page, no reasoning.*
+
+*Then the sentence that makes it safe, which is not optional:*
+
+> **If this block and the body of the document disagree, the body wins.** It
+> carries the reasoning, and a compressed rule that has lost its reason is
+> how a design system decays.
+
+*Why this section exists at all: a long design doc is the right artefact for
+a person and a difficult one for an agent, which will read what fits and
+summarise the rest. Writing the summary **yourself** means the compression is
+your judgement rather than a model's, and the pointer back to the body means
+the compression never becomes the authority.*
+
+*The failure to avoid is letting it drift. It is a derived artefact and it
+rots the moment the body changes, which is the same argument this pack makes
+about prose generally. Re-read it whenever you change a decision above, and
+if you can, derive it mechanically instead.*

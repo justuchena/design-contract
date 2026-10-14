@@ -64,6 +64,56 @@ Note the shape. Three rejections, each naming the rule it violates. One
 transfer, small and concrete. That entry took ten minutes and permanently
 settled an argument that would otherwise recur every redesign.
 
+## Read three of them at the asset level, not by eye
+
+Everything above is about judging a reference. This is about getting more out
+of one than looking at it gives you, and it is the technique that produced
+most of the notes I actually reused: open the stylesheet and the asset
+directory rather than the page.
+
+Three sites read that way contributed more than the eight read by eye, and
+what they contributed was specific enough to build from. One had 48
+per-application icons, each with its own colour identity rather than a
+monochrome stroke glyph, and hand-drawn arrows used as marketing annotation.
+One had a hero that **dissolves** into the page rather than ending at an
+edge, mask-image feathering on nearly everything, and a button built from
+five layers including an inset top highlight and an inset bottom lip. One had
+a dot-grid substrate, a body tone that is not white, and a per-child stagger
+delay set as a custom property.
+
+You cannot see any of those by eye. You can see *that* the page feels good.
+The asset directory tells you what it is made of.
+
+## What actually makes a page feel designed
+
+Here is the lesson from all three, and it is the most useful single sentence
+in this file:
+
+> Their pages do not feel designed because of any one effect. They feel
+> designed because they ship **authored artwork and texture** — icons
+> somebody drew, arrows somebody sketched, backgrounds somebody composed —
+> rather than library glyphs on flat fills.
+
+That is the positive form of everything else in this pack. The bans tell you
+what not to reach for; this tells you what the absence is actually made of. A
+generated page is not identifiable by any single wrong choice. It is
+identifiable because every element in it came off a shelf, so nothing in it
+is evidence that a person made a decision.
+
+Which has a practical consequence for how you spend effort. One drawn thing
+beats four polished ones. A single piece of authored artwork — a real
+illustration, a hand-drawn annotation, an icon set with its own logic,
+coded-not-drawn scenery with its source in the repo — does more for a page
+than another pass of spacing refinement, and it is the thing a model cannot
+produce for you by default. So if you have an afternoon, draw something and
+put it in [`imagery`](./DESIGN-TEMPLATE.md).
+
+**The honest caveat:** texture is also the easiest thing to overdo, and this
+is where the device rule comes straight back. Authored artwork works when it
+comes from *your* product's own idea. Derive it from what the product is. A
+texture borrowed because a reference had one is a device, and it arrives as
+costume like every other device.
+
 ## The standing rule
 
 When something is missing and a reference has it:

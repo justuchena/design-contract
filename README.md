@@ -1,16 +1,51 @@
+<div align="center">
+
 # no-ai-slop
+
+**A design-doc method, 152 design-system references, and a checker that
+enforces the rules a machine can hold.**
+
+For anyone building frontends with an AI agent and getting back work that is
+locally plausible and globally incoherent.
 
 [![licence: Apache-2.0](https://img.shields.io/badge/licence-Apache--2.0-blue.svg)](LICENSE)
 [![node](https://img.shields.io/badge/node-%E2%89%A518-brightgreen.svg)](package.json)
 [![dependencies: none](https://img.shields.io/badge/dependencies-none-brightgreen.svg)](package.json)
 [![design systems: 152](https://img.shields.io/badge/design%20systems-152-blue.svg)](refs/INDEX.md)
-[![self-checked: npm run verify](https://img.shields.io/badge/self--checked-npm%20run%20verify-brightgreen.svg)](enforce/test.mjs)
+[![self-checked](https://img.shields.io/badge/self--checked-npm%20run%20verify-brightgreen.svg)](enforce/test.mjs)
 
-**A design doc method, 152 design-system references, and a checker that
-enforces the rules a machine can hold.**
+[Premise](#the-premise) · [Method](#1-method--write-the-specification) ·
+[References](#2-refs--read-how-other-systems-were-specified) ·
+[Checker](#3-enforce--hold-the-rules-a-machine-can-hold) ·
+[Measurement](#4-pipeline--measure-derive-and-look) ·
+[Install](#install) · [Bans](#the-bans-worth-carrying-anywhere)
 
-For people building frontends with an AI agent and getting back work that is
-locally plausible and globally incoherent.
+</div>
+
+---
+
+## In one minute
+
+```bash
+git clone https://github.com/justuchena/no-ai-slop
+cd no-ai-slop
+
+# the finding that single-ground contrast tools never show you
+node pipeline/contrast.mjs examples/meridian/palette.json
+
+# the checker, against a deliberately broken fixture
+cd enforce/fixture && node ../design-check.mjs
+```
+
+| Layer | What it does |
+|---|---|
+| [`method/`](method/) | How to write a design doc that does not rot, and how to use a reference without copying it |
+| [`refs/`](refs/) | 152 design-system packages: prose contract, tokens, Tailwind theme, rendered fixtures |
+| [`enforce/`](enforce/) | A configurable checker for the rules a machine can hold, and nothing else |
+| [`pipeline/`](pipeline/) | Contrast matrix, token mirror, screenshot loop |
+| [`examples/meridian/`](examples/meridian/) | A complete filled-in design doc, with really measured numbers |
+| [`resources/`](resources/) | Icons, typefaces, illustration, tooling — licence noted per entry |
+| [`SKILL.md`](SKILL.md) · [`AGENTS.md`](AGENTS.md) | Agent entry points |
 
 ---
 
@@ -25,19 +60,22 @@ three-card feature row, and a gradient somewhere. Each file is defensible.
 Together they are not a product.
 
 The usual fix is to write a design doc. That is necessary and it is not
-sufficient, because **prose drifts**. On a real project of mine, every rule
-in the checker here had already been written down *and* broken:
+sufficient, because **prose drifts**. On a real project of mine, every rule in
+the checker here had already been written down *and* broken:
 
-- a grey failing contrast in sixteen places
-- five card radii where one was meant
-- a colour the doc explicitly retired, still in the stylesheet
-- em dashes in copy the same document banned them from
+| Written down | Shipped anyway |
+|---|---|
+| A contrast floor | A grey failing it in sixteen places |
+| One card radius | Five radii in use |
+| A retired colour | Still in the stylesheet |
+| No em dashes in copy | Em dashes in copy |
 
-Each was written down. Each drifted anyway, because **a rule nobody runs is a
-rule nobody keeps.**
+> **A rule nobody runs is a rule nobody keeps.**
 
 So this repo is three layers, and the third is the one that is usually
 missing.
+
+---
 
 ## 1. `method/` — write the specification
 
@@ -45,29 +83,37 @@ missing.
 template built around one idea: **every section records a decision, not a
 description.**
 
-"Buttons have an 8px radius" is a description, and it rots the moment someone
-ships a 6px button. "One radius, 8px, because five were in use and a card
-sharing a corner with its neighbour reads as one plate" is a decision — and
-now a 6px button visibly contradicts something.
+> "Buttons have an 8px radius" is a description, and it rots the moment
+> someone ships a 6px button.
+>
+> "One radius, 8px, because five were in use and a card sharing a corner with
+> its neighbour reads as one plate" is a decision — and now a 6px button
+> visibly contradicts something.
 
 Two companion docs carry the parts that matter most in practice:
 
-- [`method/references.md`](method/references.md) — **borrow structure, never
-  transplant a device.** The single distinction that separates using a
-  reference from producing a copy. This is the one to read first if you only
-  read one thing.
-- [`method/voice.md`](method/voice.md) — the two standing copy rules. No em
-  dashes anywhere a visitor can read, and one deliberately chosen register.
-  Writing is half of why an interface reads as generated, and nobody puts it
-  under a rule.
+**[`method/references.md`](method/references.md) — borrow structure, never
+transplant a device.** The single distinction that separates using a
+reference from producing a copy. Structure is how a page is ordered and what
+it groups: an argument about information, usually transferable. A device is
+the marker highlight, the cream ground, the dark closing slab: it carries
+another brand's voice and arrives as costume. *If you read one file here,
+read this one.*
 
-[`examples/meridian/`](examples/meridian/) is a complete filled-in design
-doc for an invented product, with **real measured contrast ratios**, so you
-can see what a finished one looks like before writing your own.
+**[`method/voice.md`](method/voice.md) — the two standing copy rules.** No em
+dashes anywhere a visitor can read, and one deliberately chosen register.
+Writing is half of why an interface reads as generated, and nobody puts it
+under a rule.
+
+[`examples/meridian/`](examples/meridian/) is a complete filled-in design doc
+for an invented product, with **real measured contrast ratios**, so you can
+see a finished one before writing your own.
+
+---
 
 ## 2. `refs/` — read how other systems were specified
 
-152 design-system packages, each with prose contract, `tokens.css`,
+152 design-system packages, each with a prose contract, `tokens.css`,
 `design-tokens.json`, a Tailwind v4 theme, rendered component fixtures and
 colour/type/spacing previews.
 
@@ -79,10 +125,12 @@ Two cautions, and they matter:
   design contract gets written — what gets measured, what gets named, what
   gets forbidden. That transfers whether or not the hex is current.
 
-Start at [`refs/INDEX.md`](refs/INDEX.md), which maps the catalog by the
-problem you have rather than the brand you like. Opening a package's
+Start at [`refs/INDEX.md`](refs/INDEX.md), which maps the catalog by **the
+problem you have** rather than the brand you like. Opening a package's
 `preview/colors.html` and `components.html` in a browser is much faster than
 reading its Markdown.
+
+---
 
 ## 3. `enforce/` — hold the rules a machine can hold
 
@@ -105,32 +153,43 @@ node enforce/design-check.mjs
      src/bad.tsx:5  text-gray-400 is 2.37:1 — use text-gray-500, or aria-hidden
 ```
 
-Rules: retired hues by name **and by hex**, arbitrary colour classes,
-element-scoped bans, measured contrast floors, the type ramp, the icon scale,
-the disabled pair, copy bans, one-declaration-per-token. Every rule prints the
-sentence that justifies it.
+Eleven rule kinds: retired hues **by name and by hex**, arbitrary colour
+classes, flat bans, element-scoped bans, measured contrast floors, the type
+ramp, the icon scale, the disabled pair, copy bans, and
+one-declaration-per-token. Every rule prints the sentence that justifies it.
 
-Three design decisions in here are worth stating, because they are what make
-it survive contact with a real codebase:
+<details>
+<summary><strong>Three decisions that make it survive a real codebase</strong></summary>
 
-- **Comments are stripped before every rule runs.** A checker that fires on
-  the comment explaining a ban punishes writing the explanation down. The
-  stripper preserves byte offsets so line numbers stay correct, and skips
-  string literals — because a regex for `/*` cannot tell a comment from
-  `accept="image/*"`, and getting that wrong blanks half a file and reports
-  true statements about text that does not exist.
-- **Some rules read one element, not the file.** A *card* may be pure white;
-  a *section plate* may not. A divider inside a card is fine; between two
-  sections it is banned. A flat grep cannot express the distinction a design
-  doc actually makes.
-- **It refuses to check composition.** Whether a section earns its place,
-  whether a headline is any good. A check with an opinion about taste
-  produces noise, and noise teaches people to pass `--force` — which costs
-  you every rule at once.
+<br>
 
-**Never add a rule you cannot trace to a section of your design doc.** A rule
-with no argument behind it gets deleted the first time it is inconvenient,
-and that is the correct outcome.
+**Comments are stripped before every rule runs.** A checker that fires on the
+comment explaining a ban punishes writing the explanation down. The stripper
+preserves byte offsets so line numbers stay correct, and skips string
+literals — because a regex for `/*` cannot tell a comment from
+`accept="image/*"`, and getting that wrong blanks half a file and reports
+true statements about text that does not exist.
+
+**Some rules read one element, not the file.** A *card* may be pure white; a
+*section plate* may not. A divider inside a card is fine; between two
+sections it is banned. A flat grep cannot express the distinction a design
+doc actually makes.
+
+**It refuses to check composition.** Whether a section earns its place,
+whether a headline is any good. A check with an opinion about taste produces
+noise, and noise teaches people to pass `--force` — which costs you every
+rule at once.
+
+</details>
+
+> **Never add a rule you cannot trace to a section of your design doc.** A
+> rule with no argument behind it gets deleted the first time it is
+> inconvenient, and that is the correct outcome.
+
+The same argument applies to this repo's own commit convention, so
+[`enforce/commit-check.mjs`](enforce/commit-check.mjs) holds that too.
+
+---
 
 ## 4. `pipeline/` — measure, derive, and look
 
@@ -145,8 +204,7 @@ node pipeline/derive.mjs src/styles/tokens.css --check
 node pipeline/shots.mjs --base http://localhost:5173 --routes / /pricing
 ```
 
-`contrast.mjs` exists for one specific finding that single-ground tools never
-see. On the example palette:
+`contrast.mjs` exists for one finding that single-ground tools never see:
 
 ```
                 paper #fcfcfa    tint #f3f4ef
@@ -159,93 +217,88 @@ Conditional — passes on one ground, fails on another:
 A grey that clears the floor on the page and misses it on a tinted plate.
 That cannot be expressed as a ban, because the colour is fine where it is
 fine — so the tool prints the numbers and you write the condition into the
-doc. **The checker holds the measurements; the doc holds the judgement.** That
-split is the whole method.
+doc.
+
+> **The checker holds the measurements; the doc holds the judgement.** That
+> split is the whole method.
+
+---
 
 ## Install
 
-**As an agent skill.** [`SKILL.md`](SKILL.md) is the entry point, and it lives
-at the repo root because that is where a skill loader looks for it:
+### As an agent skill
+
+[`SKILL.md`](SKILL.md) is the entry point, and it lives at the repo root
+because that is where a skill loader looks for it.
 
 ```bash
 git clone https://github.com/justuchena/no-ai-slop ~/.claude/skills/no-ai-slop
 ```
 
-Then ask for a design pass as normal. The skill routes an agent through the
-same four steps: find or write the spec, build against references without
-transplanting devices, check mechanically, then render it and look.
+Then ask for a design pass as normal. The skill routes an agent through four
+steps: find or write the spec, build against references without transplanting
+devices, check mechanically, then render it and look.
+[`AGENTS.md`](AGENTS.md) is the short form for Cursor, Codex, Copilot and
+Aider.
 
-**As a CLI**, without cloning:
+### As scripts in a project
 
-```bash
-npx no-ai-slop design-check            # needs a design-check.config.mjs
-npx no-ai-slop design-contrast palette.json
-```
-
-Or in a project:
-
-```bash
-npm i -D no-ai-slop
-```
+The scripts are plain ESM with no required dependencies, so a clone and a
+path is all they need:
 
 ```json
 {
   "scripts": {
-    "design": "design-check",
-    "design:tokens": "design-derive src/styles/tokens.css --check"
+    "design": "node ../no-ai-slop/enforce/design-check.mjs",
+    "design:tokens": "node ../no-ai-slop/pipeline/derive.mjs src/styles/tokens.css --check"
   }
 }
 ```
 
-Node 18 or newer. No required dependencies; `playwright` is an optional peer,
-needed only for `design-shots`.
+Node 18 or newer. `playwright` is an optional peer, needed only by
+`pipeline/shots.mjs`.
+
+> **Not on npm yet.** The manifest is prepared as
+> `@justuchena/no-ai-slop` — scoped, because the unscoped `no-ai-slop` on npm
+> is an unrelated project. Until it is published, clone it.
+
+---
 
 ## The bans worth carrying anywhere
 
-Absent a doc that says otherwise — each one reliably marks work as generated:
+Absent a design doc that says otherwise. Each one reliably marks work as
+generated.
 
-- **The three-card feature row.** Icon, bold line, two lines of grey. The
-  most recognisable generated layout there is. It says nothing.
-- **Gradient text.** Contrast becomes unmeasurable, so it cannot be checked,
-  so it drifts.
-- **Side-stripe borders** (`border-l-4`). Leftover scaffolding, never design.
-- **Hard rules between sections.** Sections should feather.
-- **A second accent** for "secondary" actions. Two saturated colours means
-  neither says "look here".
-- **Em dashes in user-visible copy.** The most reliable tell there is.
-- **A card grid where a table is meant.**
-- **Centred body copy.** Headings may centre; paragraphs do not.
-- **Emoji as UI iconography.**
-- **Dark as a full-width section** rather than a contained object.
-
-## Layout
-
-| Path | What it is |
+| Ban | Why |
 |---|---|
-| `method/` | The design doc template, references method, voice rules |
-| `enforce/` | `design-check.mjs`, `commit-check.mjs`, config and tests |
-| `pipeline/` | `contrast.mjs`, `derive.mjs`, `shots.mjs`, OFL fonts |
-| `refs/` | 152 design-system packages |
-| `examples/meridian/` | A filled-in design doc with real measurements |
-| `resources/` | Icons, fonts, illustration, tooling — licence per entry |
-| `SKILL.md` | Agent skill entry point (Claude Code) |
-| `AGENTS.md` | Short form for Cursor, Codex, Copilot, Aider |
+| **The three-card feature row** | Icon, bold line, two lines of grey. The most recognisable generated layout there is, and it says nothing. |
+| **Gradient text** | Contrast becomes unmeasurable, so it cannot be checked, so it drifts. |
+| **Side-stripe borders** (`border-l-4`) | Leftover scaffolding, never design. |
+| **Hard rules between sections** | Sections should feather, not butt. |
+| **A second accent** for "secondary" actions | Two saturated colours means neither says "look here". |
+| **Em dashes in user-visible copy** | The most reliable tell there is. |
+| **A card grid where a table is meant** | Tabular data has to stay scannable and sortable. |
+| **Centred body copy** | Headings may centre; paragraphs do not. |
+| **Emoji as UI iconography** | |
+| **Dark as a full-width section** | Dark is an object, not a mode. |
+
+---
 
 ## Licence
 
 Two licences, because code and content want different terms.
 
-- **`refs/`** — Apache-2.0, derived from
-  [`nexu-io/open-design`](https://github.com/nexu-io/open-design). See
-  [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE) for the full attribution chain
-  and statement of changes.
-- **`pipeline/fonts/`** — Inter and Outfit, both SIL Open Font License 1.1.
-- **Everything else** (`method/`, `enforce/`, `pipeline/*.mjs`, `examples/`,
-  `resources/`, `SKILL.md`) — original work, Apache-2.0, same as the repo.
+| What | Licence |
+|---|---|
+| [`refs/`](refs/) | Apache-2.0, derived from [`nexu-io/open-design`](https://github.com/nexu-io/open-design). See [`NOTICE`](NOTICE) for the attribution chain and statement of changes. |
+| [`pipeline/fonts/`](pipeline/fonts/) | Inter and Outfit, both SIL Open Font License 1.1 |
+| Everything else | Apache-2.0, original work — see [`LICENSE`](LICENSE) |
 
 The reference packages are aesthetic interpretations, not official assets of
 the companies they reference. They contain no logos and no trademarked
 material. All trademarks belong to their owners.
+
+---
 
 ## Contributing
 
@@ -255,21 +308,18 @@ it, a fixture case, and a negative case that must not fire. Rules without
 arguments will be declined, for the reason given above — one bad rule is
 worse than ten missing ones.
 
-Equally welcome: false positives (the most valuable report there is), licence
-corrections to `resources/`, and a second worked example for a different kind
-of product.
-
-See [`CONTRIBUTING.md`](CONTRIBUTING.md) for the bar in full, and
-[`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md).
+Equally welcome: **false positives** (the most valuable report there is),
+licence corrections to [`resources/`](resources/), and a second worked
+example for a different kind of product.
 
 ```bash
 npm run verify    # 23 assertions, the token mirror, and the commit convention
 ```
 
 Commits follow [Conventional Commits](https://www.conventionalcommits.org) —
-`type(scope): subject`, a body that says why, no `Co-Authored-By` — and
-`enforce/commit-check.mjs` checks them, because a convention nobody runs
-drifts the same way a design rule does.
+`type(scope): subject`, a body that says why, no `Co-Authored-By`. See
+[`CONTRIBUTING.md`](CONTRIBUTING.md) for the bar in full, and
+[`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md).
 
 Please do not send PRs editing the contents of `refs/` — those packages are
 redistributed unmodified, and keeping them that way is what makes

@@ -1,0 +1,63 @@
+{
+  "name": "no-ai-slop",
+  "version": "0.1.0",
+  "description": "A design-doc method, 152 design-system references, and a checker that enforces the rules a machine can hold.",
+  "keywords": [
+    "design-system",
+    "design-tokens",
+    "design-review",
+    "frontend",
+    "linter",
+    "accessibility",
+    "contrast",
+    "wcag",
+    "tailwindcss",
+    "claude-code",
+    "ai-agents",
+    "agent-skill"
+  ],
+  "homepage": "https://github.com/justuchena/no-ai-slop#readme",
+  "bugs": "https://github.com/justuchena/no-ai-slop/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/justuchena/no-ai-slop.git"
+  },
+  "license": "Apache-2.0",
+  "author": "Uchenna Ngozi",
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "bin": {
+    "design-check": "enforce/design-check.mjs",
+    "design-contrast": "pipeline/contrast.mjs",
+    "design-derive": "pipeline/derive.mjs",
+    "design-shots": "pipeline/shots.mjs"
+  },
+  "scripts": {
+    "test": "node enforce/test.mjs",
+    "check": "node enforce/design-check.mjs",
+    "contrast": "node pipeline/contrast.mjs examples/meridian/palette.json",
+    "derive:check": "node pipeline/derive.mjs examples/meridian/tokens.css --check",
+    "verify": "node enforce/test.mjs && node pipeline/derive.mjs examples/meridian/tokens.css --check"
+  },
+  "files": [
+    "enforce",
+    "method",
+    "pipeline",
+    "examples",
+    "resources",
+    "refs",
+    "SKILL.md",
+    "LICENSE",
+    "NOTICE"
+  ],
+  "peerDependencies": {
+    "playwright": ">=1.40.0"
+  },
+  "peerDependenciesMeta": {
+    "playwright": {
+      "optional": true
+    }
+  }
+}

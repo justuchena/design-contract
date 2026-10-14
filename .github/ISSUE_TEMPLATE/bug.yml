@@ -1,0 +1,34 @@
+name: Bug
+description: A script crashes, misreports, or behaves wrongly
+labels: ["bug"]
+body:
+  - type: input
+    id: script
+    attributes:
+      label: Which script
+      placeholder: design-check / contrast / derive / shots
+    validations:
+      required: true
+
+  - type: textarea
+    id: command
+    attributes:
+      label: The command you ran
+      render: shell
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected, and what happened
+    validations:
+      required: true
+
+  - type: input
+    id: node
+    attributes:
+      label: Node version
+      placeholder: "node --version"
+    validations:
+      required: true

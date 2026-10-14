@@ -1,0 +1,45 @@
+name: False positive
+description: design-check reported something legitimate
+labels: ["false-positive"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The most valuable report there is. A checker that cries wolf gets
+        switched off, so these are fixed ahead of new rules.
+
+  - type: input
+    id: rule
+    attributes:
+      label: Which rule fired
+      placeholder: palette / contrast / type / icon / state / copy / tokens / plate / seam
+    validations:
+      required: true
+
+  - type: textarea
+    id: source
+    attributes:
+      label: The source it fired on
+      description: The smallest snippet that reproduces it. Include surrounding lines if a comment or string literal is involved.
+      render: tsx
+    validations:
+      required: true
+
+  - type: textarea
+    id: why-legit
+    attributes:
+      label: Why it is legitimate
+    validations:
+      required: true
+
+  - type: textarea
+    id: config
+    attributes:
+      label: Your config for that rule
+      render: js
+
+  - type: input
+    id: node
+    attributes:
+      label: Node version
+      placeholder: "node --version"

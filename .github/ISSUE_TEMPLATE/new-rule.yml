@@ -1,0 +1,86 @@
+name: Propose a rule
+description: A new check for design-check, or a change to an existing one
+labels: ["rule"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        A rule must come with the argument that justifies it.
+
+        This is not ceremony. The checker is only useful while its findings
+        are worth reading — a rule that fires on something defensible teaches
+        people the output is noise, and then they pass `--force`, which costs
+        every rule at once. One bad rule is worse than ten missing ones.
+
+        If your idea is a sensible *default* with legitimate exceptions, it
+        probably belongs in `method/` or the bans list in `SKILL.md` instead,
+        and that is a good outcome rather than a rejection.
+
+  - type: textarea
+    id: failure
+    attributes:
+      label: What goes wrong without it
+      description: >
+        Concretely. A specific incident beats a general principle — "this
+        grey measured 2.37:1 on our plate and nobody noticed for four months"
+        is the shape that works.
+      placeholder: |
+        What shipped, what broke, how long it went unnoticed, how it was found.
+    validations:
+      required: true
+
+  - type: textarea
+    id: why-not-prose
+    attributes:
+      label: Why prose alone does not hold it
+      description: >
+        If writing it in a design doc reliably prevents it, it does not need
+        to be a check. What makes this one drift anyway?
+    validations:
+      required: true
+
+  - type: textarea
+    id: negative
+    attributes:
+      label: The negative case
+      description: >
+        Something that looks like a violation and must NOT fire. This is the
+        part people skip and the part that decides whether the rule survives
+        a real codebase. A comment explaining the ban, a decorative glyph
+        with `aria-hidden`, a legitimate exception.
+      placeholder: |
+        This should NOT be reported, because...
+    validations:
+      required: true
+
+  - type: textarea
+    id: why-string
+    attributes:
+      label: The `why` the report should print
+      description: >
+        One sentence, as you would say it to a colleague who just hit it.
+      placeholder: Gradient text is banned: it makes contrast unmeasurable, so it cannot be checked.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Does it check something measurable?
+      description: >
+        The checker holds geometry, colour, punctuation and measurable
+        floors. It deliberately refuses composition, hierarchy and taste.
+      options:
+        - "Yes — a machine can decide it with no judgement call"
+        - "Partly — there are exceptions, and I have listed them above"
+        - "No — it needs judgement (this belongs in method/, not enforce/)"
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: fixture
+    attributes:
+      label: Before a PR
+      options:
+        - label: I can add a case to `enforce/fixture/src/` and an assertion to `enforce/test.mjs`
+        - label: I have read the "rules that will be declined" list in CONTRIBUTING.md

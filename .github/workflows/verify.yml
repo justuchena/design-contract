@@ -1,0 +1,80 @@
+# This repo argues that a rule nobody runs is a rule nobody keeps. Not
+# running its own checks in CI would be the same mistake, one level up.
+name: verify
+
+# Run on demand for now: `npm run verify` is the same suite and is what a
+# contributor runs locally before a PR.
+#
+# To run it on every push and pull request instead, restore:
+#
+#   push:
+#     branches: [main]
+#   pull_request:
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # 18 is the floor the scripts claim to support. The walker in
+        # design-check.mjs is hand-written specifically so that claim holds:
+        # globSync landed in 22 and readdirSync({recursive:true}) in 18.17,
+        # and a version table is not something a design tool should bet on.
+        node: [18, 20, 22, 24]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+
+      - name: The checker, against its fixture
+        run: node enforce/test.mjs
+
+      - name: Token mirror is not stale
+        run: node pipeline/derive.mjs examples/meridian/tokens.css --check
+
+      - name: Contrast floors, scoped per ground
+        # Exits 1 on the documented fg-subtle finding, which the worked
+        # example explains and deliberately keeps. Assert the finding is
+        # exactly the one expected rather than that the command passed.
+        run: |
+          out=$(node pipeline/contrast.mjs examples/meridian/palette.json || true)
+          echo "$out"
+          echo "$out" | grep -q "fg-subtle: clears 4.5:1 on paper but not on tint" \
+            || { echo "::error::the documented conditional finding changed"; exit 1; }
+          test "$(echo "$out" | grep -c '✗')" = "2" \
+            || { echo "::error::unexpected number of contrast failures"; exit 1; }
+
+  links:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Every relative link in the docs resolves
+        # A pack whose own cross-references 404 teaches nobody anything, and
+        # SKILL.md's links broke once already when it moved to the root.
+        run: |
+          fail=0
+          for f in README.md SKILL.md NOTICE method/*.md enforce/README.md \
+                   pipeline/README.md resources/README.md refs/INDEX.md \
+                   examples/meridian/DESIGN.md; do
+            [ -f "$f" ] || continue
+            dir=$(dirname "$f")
+            grep -oE '\]\([^)#][^)]*\)' "$f" | sed -E 's/^\]\(//; s/\)$//' | while read -r link; do
+              case "$link" in http*|mailto:*) continue ;; esac
+              target="${link%%#*}"
+              [ -z "$target" ] && continue
+              if [ ! -e "$dir/$target" ] && [ ! -e "$target" ]; then
+                echo "::error file=$f::broken link -> $link"
+                exit 1
+              fi
+            done || fail=1
+          done
+          [ "$fail" = 0 ] || exit 1
+          echo "all relative links resolve"

@@ -1,0 +1,8 @@
+node_modules/
+.shots/
+*.local.*
+.DS_Store
+
+# Reference screenshots are somebody else's copyrighted pages. Keep the notes
+# in the repo and the images out of it. See method/references.md.
+reference-screenshots/

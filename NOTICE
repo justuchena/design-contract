@@ -1,0 +1,118 @@
+no-ai-slop
+Copyright 2026 Uchenna Ngozi
+
+This product includes software and content developed by third parties.
+The attribution and modification record below is provided in accordance with
+section 4 of the Apache License, Version 2.0 (see LICENSE).
+
+================================================================================
+refs/ — design system reference packages
+================================================================================
+
+The 152 design-system packages under `refs/` are derived from:
+
+  nexu-io/open-design
+  https://github.com/nexu-io/open-design
+  Licensed under the Apache License, Version 2.0
+
+Obtained 2026-08-17.
+
+That catalog in turn incorporates content from these upstream sources, as
+recorded in its own attribution notice and in each package's `manifest.json`
+`source` field and `source/evidence.md`:
+
+  VoltAgent/awesome-design-md
+  https://github.com/VoltAgent/awesome-design-md
+  MIT License
+  (upstream-derived product design systems)
+
+  bergside/awesome-design-skills
+  https://github.com/bergside/awesome-design-skills
+  (normalized design-skill systems)
+
+  tw93/kami
+  https://github.com/tw93/kami
+  MIT License
+  (the `kami` package)
+
+  Tom-Opencart/tom-modern-html-style-rule
+  https://github.com/Tom-Opencart/tom-modern-html-style-rule
+  MIT License
+  (the `tom-modern` package)
+
+--------------------------------------------------------------------------------
+Statement of changes (Apache-2.0 §4(b))
+--------------------------------------------------------------------------------
+
+The following modifications were made to the `refs/` content obtained from
+nexu-io/open-design:
+
+  1. The packages were extracted from their position in the upstream product
+     repository (`design-systems/`) and relocated to `refs/` in this
+     repository. No package contents were altered.
+
+  2. `refs/INDEX.md` was rewritten. It is original work by this repository's
+     author and is not part of the upstream project. The upstream
+     `README.md`, which documents the package contract and the runtime
+     schema, is retained as `refs/README.md` substantially unmodified.
+
+  3. No files were added to, removed from, or edited inside any individual
+     package directory.
+
+Runtime-contract fields documented in `refs/README.md` (the `od design-systems`
+CLI, the `OD_NODE_BIN`/`OD_BIN` resolver and validator, the
+`/api/design-systems` endpoint and the daemon) belong to the upstream product
+and are not present in this repository. Those sections are retained because
+they document the package format, which is unchanged.
+
+--------------------------------------------------------------------------------
+On brand-referencing packages
+--------------------------------------------------------------------------------
+
+Many packages are named after, and describe the design language of, real
+companies and products. Carried over from the upstream notice:
+
+  Brand-referencing packages are aesthetic inspirations, not official assets
+  of the brands they reference.
+
+These packages contain no logos, no trademarked assets, and no copied source
+material: each is a written interpretation. As each package's
+`source/evidence.md` states, the content is
+
+  derived from the curated Open Design bundled fixture. It does not claim a
+  fresh crawl of the original upstream brand repository or website.
+
+All trademarks are the property of their respective owners. Nothing here is
+affiliated with, endorsed by, or sponsored by any company named.
+
+================================================================================
+pipeline/fonts/ — typefaces
+================================================================================
+
+  Inter
+  Copyright 2020 The Inter Project Authors
+  https://github.com/rsms/inter
+  SIL Open Font License, Version 1.1 — see pipeline/fonts/OFL-Inter.txt
+
+  Outfit
+  Copyright 2021 The Outfit Project Authors
+  https://github.com/Outfitio/Outfit-Fonts
+  SIL Open Font License, Version 1.1 — see pipeline/fonts/OFL-Outfit.txt
+
+Both are redistributed unmodified as subset woff2 files, under the terms of
+the SIL Open Font License, Version 1.1. Neither font is sold, and neither is
+distributed under a Reserved Font Name.
+
+================================================================================
+Original work
+================================================================================
+
+Everything outside `refs/` and `pipeline/fonts/` is original work by this
+repository's author, licensed as described in README.md:
+
+  method/      the design-doc method, template and voice rules
+  enforce/     design-check.mjs, its configuration contract and tests
+  pipeline/    contrast.mjs, derive.mjs, shots.mjs
+  examples/    the Meridian worked example
+  resources/   the curated resource index
+  SKILL.md     the skill entry point

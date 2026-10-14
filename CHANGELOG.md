@@ -28,6 +28,12 @@ First release.
 - Composition is deliberately not checked.
 - `enforce/test.mjs` — 23 assertions against `enforce/fixture/`, including
   six negative cases.
+- `enforce/commit-check.mjs` — the same argument applied to this repo's own
+  commit convention. Fails on a malformed subject, an unknown type or scope,
+  a trailing full stop, an empty opening word, a missing blank line or a
+  `Co-Authored-By` trailer; warns, without failing, on the rules whose
+  exceptions need judgement. Installable as a `commit-msg` hook via
+  `git config core.hooksPath .githooks`.
 
 ### Measurement
 

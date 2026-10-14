@@ -23,7 +23,11 @@
     "url": "git+https://github.com/justuchena/no-ai-slop.git"
   },
   "license": "Apache-2.0",
-  "author": "Uchenna Ngozi",
+  "author": {
+    "name": "Uchenna Ngozi",
+    "email": "uchenangozi@gmail.com",
+    "url": "https://github.com/justuchena"
+  },
   "type": "module",
   "engines": {
     "node": ">=18"
@@ -32,14 +36,16 @@
     "design-check": "enforce/design-check.mjs",
     "design-contrast": "pipeline/contrast.mjs",
     "design-derive": "pipeline/derive.mjs",
-    "design-shots": "pipeline/shots.mjs"
+    "design-shots": "pipeline/shots.mjs",
+    "design-commit-check": "enforce/commit-check.mjs"
   },
   "scripts": {
     "test": "node enforce/test.mjs",
     "check": "node enforce/design-check.mjs",
     "contrast": "node pipeline/contrast.mjs examples/meridian/palette.json",
     "derive:check": "node pipeline/derive.mjs examples/meridian/tokens.css --check",
-    "verify": "node enforce/test.mjs && node pipeline/derive.mjs examples/meridian/tokens.css --check"
+    "verify": "node enforce/test.mjs && node pipeline/derive.mjs examples/meridian/tokens.css --check && node enforce/commit-check.mjs --range all",
+    "commits": "node enforce/commit-check.mjs --range all"
   },
   "files": [
     "enforce",

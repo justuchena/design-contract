@@ -95,6 +95,38 @@ wrong file, and it hid a live violation through four sweeps.
 
 Exit codes: `0` clean, `1` findings, `2` misconfigured.
 
+## `commit-check.mjs`
+
+The same argument, applied to this repo's own commit convention: documenting
+one in `CONTRIBUTING.md` and never running it would be the mistake this
+project is named after.
+
+```bash
+node enforce/commit-check.mjs                            # the last commit
+node enforce/commit-check.mjs --range origin/main..HEAD   # a branch
+node enforce/commit-check.mjs --range all                 # every commit
+node enforce/commit-check.mjs --file .git/COMMIT_EDITMSG  # as a hook
+```
+
+```bash
+git config core.hooksPath .githooks   # runs it on commit-msg
+```
+
+It fails on a malformed subject, an unknown type or scope, a trailing full
+stop, an empty opening word (`Update`, `wip`, `misc`), a missing blank line,
+and a `Co-Authored-By` trailer.
+
+It only *warns* on a capital first word, a missing body, and a long subject.
+The first of those is the interesting one, and it is the same judgement the
+design checker makes: sentence case is the convention, but the exception is a
+proper noun or a filename, and no regex separates `Meridian, a filled-in
+design doc` from `Update the readme`. A rule that cannot hold its own
+exception does not get to fail a build.
+
+Subject length is uncapped on purpose. The convention this borrows from runs
+to 178 characters, and a subject carrying the measurement is worth more than
+one that fits a terminal.
+
 ## Adding a rule
 
 The test: **can you point at the section of your design doc it enforces?** If

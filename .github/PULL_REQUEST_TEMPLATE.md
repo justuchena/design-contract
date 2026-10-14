@@ -12,8 +12,8 @@
 
 ## Checks
 
-- [ ] `node enforce/test.mjs` passes
-- [ ] `node pipeline/derive.mjs examples/meridian/tokens.css --check` passes
+- [ ] `npm run verify` passes
+- [ ] Commits follow the convention in [CONTRIBUTING.md § Commits](../CONTRIBUTING.md#commits) — `type(scope): subject`, a body that says why, no `Co-Authored-By`
 
 <!-- refs/ is redistributed unmodified from nexu-io/open-design under
      Apache-2.0. PRs editing package contents will be closed with a pointer

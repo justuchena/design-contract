@@ -223,7 +223,7 @@ Absent a doc that says otherwise — each one reliably marks work as generated:
 | Path | What it is |
 |---|---|
 | `method/` | The design doc template, references method, voice rules |
-| `enforce/` | `design-check.mjs` and its annotated config |
+| `enforce/` | `design-check.mjs`, `commit-check.mjs`, config and tests |
 | `pipeline/` | `contrast.mjs`, `derive.mjs`, `shots.mjs`, OFL fonts |
 | `refs/` | 152 design-system packages |
 | `examples/meridian/` | A filled-in design doc with real measurements |
@@ -263,8 +263,13 @@ See [`CONTRIBUTING.md`](CONTRIBUTING.md) for the bar in full, and
 [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md).
 
 ```bash
-npm run verify    # 23 assertions, plus the token mirror
+npm run verify    # 23 assertions, the token mirror, and the commit convention
 ```
+
+Commits follow [Conventional Commits](https://www.conventionalcommits.org) —
+`type(scope): subject`, a body that says why, no `Co-Authored-By` — and
+`enforce/commit-check.mjs` checks them, because a convention nobody runs
+drifts the same way a design rule does.
 
 Please do not send PRs editing the contents of `refs/` — those packages are
 redistributed unmodified, and keeping them that way is what makes

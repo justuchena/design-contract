@@ -88,11 +88,65 @@ attribution in [`NOTICE`](NOTICE) accurate and the statement of changes
 honest. Corrections to `refs/INDEX.md`, which is this repo's own writing, are
 welcome.
 
-## Commits and PRs
+## Commits
 
-- Explain *why* in the body. The what is in the diff.
+[Conventional Commits](https://www.conventionalcommits.org), checked:
+
+```
+type(scope): subject
+
+A body that explains why. The diff already shows the what.
+```
+
+```bash
+node enforce/commit-check.mjs --range origin/main..HEAD
+```
+
+**Types** — `feat` `fix` `refactor` `docs` `test` `chore` `style` `build`
+`ci` `perf` `revert`.
+
+**Scopes** — `repo` `refs` `method` `enforce` `pipeline` `examples`
+`resources` `skill` `licence` `deps` `ci`. Several are allowed when a change
+genuinely crosses areas (`refactor(method,enforce): …`). A scope outside the
+list usually means the change is wider than it looks, so add one here only
+when a real area appears — not a vague one.
+
+**`!` before the colon** for a breaking change: `chore(repo)!: …`.
+
+The rules the check enforces:
+
+- The subject matches the format, with a known type and scope.
+- No full stop at the end of the subject.
+- No `Update`, `changes`, `wip` or `misc` as the opening word. They say
+  nothing; name what changed and why it matters.
+- A blank line between subject and body.
+- **No `Co-Authored-By` trailer.**
+
+And what it only warns about, deliberately:
+
+- **A capital first word.** Sentence case is the convention, but the
+  exception needs judgement — `SKILL.md` is a filename, `Meridian` is a
+  proper noun — and no regex tells those from `Update the readme`. A check
+  that cannot hold its own exception should not fail a build; the first false
+  positive is what teaches people to bypass it. The same reasoning the
+  checker applies to design rules.
+- **A missing body**, on anything but `chore`, `style`, `ci` and `build`.
+  Long, reasoned bodies are wanted. A typo fix does not owe a paragraph.
+- **Subject length.** Uncapped on purpose. A subject that carries the
+  measurement — `— 24,465 lines` — is worth more than one that fits a
+  terminal.
+
+To have it run before the message is written rather than after CI rejects
+it:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+## Pull requests
+
 - One concern per PR.
-- No need to update a changelog; that happens at release.
+- No need to update the changelog; that happens at release.
 
 ## Conduct
 

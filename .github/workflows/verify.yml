@@ -52,6 +52,26 @@ jobs:
           test "$(echo "$out" | grep -c '✗')" = "2" \
             || { echo "::error::unexpected number of contrast failures"; exit 1; }
 
+  commits:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The default shallow clone has no base to compare against, so a
+          # range check would silently pass by reading nothing.
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Commit messages follow the convention
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            node enforce/commit-check.mjs \
+              --range origin/${{ github.base_ref }}..HEAD
+          else
+            node enforce/commit-check.mjs --range all
+          fi
+
   links:
     runs-on: ubuntu-latest
     steps:

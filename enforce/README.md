@@ -123,9 +123,12 @@ proper noun or a filename, and no regex separates `Meridian, a filled-in
 design doc` from `Update the readme`. A rule that cannot hold its own
 exception does not get to fail a build.
 
-Subject length is uncapped on purpose. The convention this borrows from runs
-to 178 characters, and a subject carrying the measurement is worth more than
-one that fits a terminal.
+Subject length is uncapped on purpose, and the warning threshold comes from
+measurement rather than from the 72 characters everyone repeats. Across 427
+commits of the convention this borrows from: median 99, p90 127, p99 148,
+max 178. Warning at 120 would have fired on 15% of them — and a warning that
+fires on one commit in seven is exactly the noise that teaches people to stop
+reading warnings. It warns above 150 and never fails.
 
 ## Adding a rule
 

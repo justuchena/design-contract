@@ -148,9 +148,11 @@ And what it only warns about, deliberately:
   checker applies to design rules.
 - **A missing body**, on anything but `chore`, `style`, `ci` and `build`.
   Long, reasoned bodies are wanted. A typo fix does not owe a paragraph.
-- **Subject length.** Uncapped on purpose. A subject that carries the
-  measurement — `— 24,465 lines` — is worth more than one that fits a
-  terminal.
+- **Subject length**, above 150. Uncapped on purpose: a subject that carries
+  the measurement — `— 24,465 lines` — is worth more than one that fits a
+  terminal. 150 is measured rather than inherited; the usual 72 would fire on
+  most good subjects, and a warning that fires constantly is one nobody
+  reads.
 
 To have it run before the message is written rather than after CI rejects
 it:

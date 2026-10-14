@@ -13,11 +13,15 @@
  * by the project that names it.
  *
  * ── What it does not do ──────────────────────────────────────────────────
- * It does not cap the subject length, and that is deliberate. A convention
- * borrowed from a repo whose subjects run to 178 characters should not
- * invent a 72-character rule it never had; a subject that names the
- * measurement ("— 21,398 lines") is worth more than one that fits a
- * terminal. It warns, late, and never fails on length.
+ * It does not cap the subject length, and that is deliberate. A subject that
+ * names the measurement ("— 21,398 lines") is worth more than one that fits
+ * a terminal. The threshold is set from the distribution it is meant to
+ * describe rather than from the 72 characters everyone repeats: across 427
+ * commits of the convention this borrows from, the median subject is 99 and
+ * the 99th percentile is 148. Warning at 120 would have fired on 15% of
+ * them, and a warning that fires on one commit in seven is the noise this
+ * project is otherwise careful to avoid. So it warns above 150, which is
+ * the genuine outlier, and never fails.
  *
  * It also cannot tell whether the body explains *why*. That needs a reader.
  *
@@ -150,7 +154,7 @@ for (const { sha, text } of messages) {
   if (!body && !["chore", "style", "ci", "build"].includes(type)) {
     warn("no body — the diff shows the what, so the body should carry the why");
   }
-  if (subject.length > 120) {
+  if (subject.length > 150) {
     warn(`subject is ${subject.length} characters`);
   }
 }

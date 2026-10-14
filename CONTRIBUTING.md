@@ -78,6 +78,22 @@ which is why they carry more comment than code of this size usually would.
 that stops it being deleted in a year by someone who cannot see what it was
 for. If you change a rule's behaviour, change the comment with it.
 
+## Two generated files
+
+Do not edit either by hand. `npm run verify` fails when they are stale.
+
+| Generated | From | By |
+|---|---|---|
+| `examples/meridian/design-tokens.json` | `examples/meridian/tokens.css` | `pipeline/derive.mjs` |
+| `skills/no-ai-slop/SKILL.md` | `SKILL.md` | `pipeline/derive-skill.mjs` |
+
+The skill copy exists because the two install paths want the file in
+different places and neither is negotiable: a cloned skill is read from the
+clone root, and a plugin's `skills/` directory is what gets scanned, so a
+root-only `SKILL.md` is never found by a plugin. The root copy is canonical
+because it is the one a reader opens on GitHub; the copy is rewritten from it
+with its links repointed two levels up.
+
 ## On `refs/`
 
 The 152 packages in `refs/` are redistributed from

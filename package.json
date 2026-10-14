@@ -37,15 +37,17 @@
     "design-contrast": "pipeline/contrast.mjs",
     "design-derive": "pipeline/derive.mjs",
     "design-shots": "pipeline/shots.mjs",
-    "design-commit-check": "enforce/commit-check.mjs"
+    "design-commit-check": "enforce/commit-check.mjs",
+    "design-derive-skill": "pipeline/derive-skill.mjs"
   },
   "scripts": {
     "test": "node enforce/test.mjs",
     "check": "node enforce/design-check.mjs",
     "contrast": "node pipeline/contrast.mjs examples/meridian/palette.json",
     "derive:check": "node pipeline/derive.mjs examples/meridian/tokens.css --check",
-    "verify": "node enforce/test.mjs && node pipeline/derive.mjs examples/meridian/tokens.css --check && node enforce/commit-check.mjs --range all",
-    "commits": "node enforce/commit-check.mjs --range all"
+    "verify": "node enforce/test.mjs && node pipeline/derive.mjs examples/meridian/tokens.css --check && node pipeline/derive-skill.mjs --check && node enforce/commit-check.mjs --range all",
+    "commits": "node enforce/commit-check.mjs --range all",
+    "skill": "node pipeline/derive-skill.mjs"
   },
   "files": [
     "enforce",
@@ -56,7 +58,9 @@
     "refs",
     "SKILL.md",
     "LICENSE",
-    "NOTICE"
+    "NOTICE",
+    "skills",
+    ".claude-plugin"
   ],
   "peerDependencies": {
     "playwright": ">=1.40.0"

@@ -1,0 +1,21 @@
+{
+  "name": "no-ai-slop",
+  "description": "A design-doc method, 152 design-system references, and a checker that enforces the rules a machine can hold.",
+  "version": "0.1.0",
+  "owner": {
+    "name": "Uchenna Ngozi",
+    "url": "https://github.com/justuchena"
+  },
+  "metadata": {
+    "repository": "https://github.com/justuchena/no-ai-slop"
+  },
+  "plugins": [
+    {
+      "name": "no-ai-slop",
+      "displayName": "no-ai-slop",
+      "description": "Build frontend UI that does not read as generated. Carries the design-doc method, 152 design-system reference packages, a configurable design checker, and the contrast and token tooling the method's measurements depend on.",
+      "source": "./",
+      "homepage": "https://github.com/justuchena/no-ai-slop"
+    }
+  ]
+}

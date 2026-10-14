@@ -45,7 +45,7 @@ cd enforce/fixture && node ../design-check.mjs
 | [`pipeline/`](pipeline/) | Contrast matrix, token mirror, screenshot loop |
 | [`examples/meridian/`](examples/meridian/) | A complete filled-in design doc, with really measured numbers |
 | [`resources/`](resources/) | Icons, typefaces, illustration, tooling — licence noted per entry |
-| [`SKILL.md`](SKILL.md) · [`AGENTS.md`](AGENTS.md) | Agent entry points |
+| [`SKILL.md`](SKILL.md) · [`AGENTS.md`](AGENTS.md) | Agent entry points — plugin, skill, or any other agent |
 
 ---
 
@@ -226,20 +226,34 @@ doc.
 
 ## Install
 
-### As an agent skill
+### As a Claude Code plugin
 
-[`SKILL.md`](SKILL.md) is the entry point, and it lives at the repo root
-because that is where a skill loader looks for it.
-
-```bash
-git clone https://github.com/justuchena/no-ai-slop ~/.claude/skills/no-ai-slop
+```
+/plugin marketplace add justuchena/no-ai-slop
+/plugin install no-ai-slop
 ```
 
 Then ask for a design pass as normal. The skill routes an agent through four
 steps: find or write the spec, build against references without transplanting
 devices, check mechanically, then render it and look.
-[`AGENTS.md`](AGENTS.md) is the short form for Cursor, Codex, Copilot and
-Aider.
+
+### As a skill, cloned
+
+```bash
+git clone https://github.com/justuchena/no-ai-slop ~/.claude/skills/no-ai-slop
+```
+
+[`SKILL.md`](SKILL.md) sits at the repo root because that is where a skill
+loader looks for it. A plugin's `skills/` directory is scanned instead, so
+[`skills/no-ai-slop/SKILL.md`](skills/no-ai-slop/SKILL.md) is generated from
+the root copy by [`pipeline/derive-skill.mjs`](pipeline/derive-skill.mjs),
+with its links repointed and a staleness check in `npm run verify`. Edit the
+root one.
+
+### With any other agent
+
+[`AGENTS.md`](AGENTS.md) is the short form that Cursor, Codex, Copilot and
+Aider read by convention.
 
 ### As scripts in a project
 

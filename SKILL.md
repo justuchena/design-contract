@@ -4,7 +4,7 @@ description: Build frontend UI that does not read as generated. Use when designi
 license: see LICENSE and NOTICE at the repo root
 ---
 
-# Design pack
+# no-ai-slop
 
 Generated-looking UI is not a taste problem. It is a **specification** problem.
 A model with no design doc invents one per file, so the work is locally

@@ -40,6 +40,9 @@ jobs:
       - name: Token mirror is not stale
         run: node pipeline/derive.mjs examples/meridian/tokens.css --check
 
+      - name: The plugin's skill copy is not stale
+        run: node pipeline/derive-skill.mjs --check
+
       - name: Contrast floors, scoped per ground
         # Exits 1 on the documented fg-subtle finding, which the worked
         # example explains and deliberately keeps. Assert the finding is

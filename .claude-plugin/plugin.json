@@ -1,0 +1,25 @@
+{
+  "name": "no-ai-slop",
+  "version": "0.1.0",
+  "description": "Build frontend UI that does not read as generated. A design-doc method, 152 design-system references, and a checker that enforces the rules a machine can hold — geometry, colour, punctuation and measured contrast floors, and deliberately not composition.",
+  "author": {
+    "name": "Uchenna Ngozi",
+    "url": "https://github.com/justuchena"
+  },
+  "homepage": "https://github.com/justuchena/no-ai-slop#readme",
+  "repository": "https://github.com/justuchena/no-ai-slop",
+  "license": "Apache-2.0",
+  "keywords": [
+    "design-system",
+    "design-tokens",
+    "frontend",
+    "ui",
+    "ux",
+    "design-review",
+    "accessibility",
+    "contrast",
+    "wcag",
+    "tailwindcss"
+  ],
+  "skills": "./skills"
+}

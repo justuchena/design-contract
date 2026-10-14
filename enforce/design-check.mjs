@@ -186,6 +186,103 @@ const elementsNamed = (text, name) => {
   return out;
 };
 
+/* ── the second tier of helpers ───────────────────────────────────────────
+   Everything above this line reads a file, a match, or one open tag. The
+   rules below the next heading ask harder questions — what is *inside* this
+   button, what wraps this field, is this whole class expression self
+   consistent — and three of them cannot be answered by a regex over a line.
+   Each helper here exists because a rule built without it reported something
+   true about text that was not there. */
+
+/* The index of the `>` that closes an open tag starting at `from`.
+   Brace-aware, so `className={cond ? a : b}` does not end the tag early. */
+const openTagEnd = (text, from) => {
+  let depth = 0;
+  for (let i = from; i < text.length; i += 1) {
+    const c = text[i];
+    if (c === "{") depth += 1;
+    else if (c === "}") depth -= 1;
+    else if (c === ">" && depth === 0) return i;
+  }
+  return -1;
+};
+
+/* Elements matching a name pattern, with the open tag, the index of its `>`
+   and which alternative actually matched. The last of those is what lets a
+   rule find the closing tag of whatever it is standing on. */
+const elementsOf = function* (text, namePattern) {
+  const re = new RegExp(`<(${namePattern})\\b`, "g");
+  let m;
+  while ((m = re.exec(text))) {
+    const end = openTagEnd(text, m.index + m[0].length);
+    if (end === -1) continue;
+    yield { index: m.index, tag: text.slice(m.index, end + 1), end, name: m[1] };
+  }
+};
+
+const classNameOf = (tag) => {
+  const m = tag.match(/class(?:Name)?=\{?(["'`])((?:(?!\1)[\s\S])*?)\1/);
+  return m ? m[2] : null;
+};
+
+/**
+ * Every class expression in a file, as whole expressions.
+ *
+ * Several rules below are about a *contradiction inside one expression* —
+ * `opacity-0` with a hover answer and no focus answer, an ink token carrying
+ * text, an outline removed with nothing put back. A line-wise check gets all
+ * three wrong the moment somebody formats an array of classes across five
+ * lines, which is the normal way to write a long one. It then reports a file
+ * that is correct, and the fix a reader applies makes it worse.
+ *
+ * The four alternatives are a plain string, a template literal, an
+ * `[...].join()` array, and a braced expression with one level of nesting
+ * (which covers `clsx(...)` and a ternary). `class=` as well as `className=`,
+ * so the rules are not React-only.
+ */
+const CLASS_EXPR =
+  /class(?:Name)?=(?:"[^"]*"|'[^']*'|\{`[^`]*`\}|\{\[[\s\S]*?\]\.join\([^)]*\)\}|\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\})/g;
+const classExpressions = (text) => [...text.matchAll(CLASS_EXPR)];
+
+/**
+ * The open tags still unclosed at `index` — a node's JSX ancestors.
+ *
+ * This exists for the field rule, and the first version of that rule
+ * without it reported thirteen correctly labelled fields as nameless. Their
+ * label is a local `<Row label="Name">` whose *body* is a `<label>` wrapping
+ * the children: the association is real, it is implicit, and it crosses a
+ * component boundary no regex over one file can follow.
+ *
+ * So the test a rule should apply to the result is the *prop*, not the
+ * element — an ancestor that is a `<label>`, or that takes a `label=` or
+ * `aria-label=` prop, is naming what it wraps. A wrapper that accepts a
+ * `label` and fails to render one is a bug in the wrapper, and belongs to
+ * the wrapper's own tests rather than to this checker.
+ */
+const ancestorsOf = (text, index) => {
+  const stack = [];
+  const re = /<(\/?)([A-Za-z][\w.]*)\b/g;
+  let m;
+  while ((m = re.exec(text)) && m.index < index) {
+    const end = openTagEnd(text, m.index + m[0].length);
+    if (end === -1) continue;
+    const tag = text.slice(m.index, end + 1);
+    if (m[1]) {
+      for (let i = stack.length - 1; i >= 0; i -= 1) {
+        if (stack[i].name === m[2]) {
+          stack.length = i;
+          break;
+        }
+      }
+    } else if (!/\/>$/.test(tag)) {
+      stack.push({ name: m[2], tag });
+    }
+  }
+  return stack;
+};
+
+const MARKUP = [".tsx", ".jsx", ".vue", ".svelte"];
+
 // ── rule: retired colours, by class name ────────────────────────────────
 // The commonest drift of all. A hue gets retired in the doc and lives on in
 // the tree, because retiring it was a sentence and removing it was work.
@@ -392,11 +489,470 @@ if (config.tokensDeclaredOnce) {
   }
 }
 
+// ── rule: the focus indicator ───────────────────────────────────────────
+// A bare `focus:outline-none` removes the indicator and puts nothing back,
+// which is the most common accessibility failure in generated UI: the
+// suppression is one word, the replacement is a decision, and a model that
+// has been asked for a clean-looking button writes the first and skips the
+// second.
+//
+// Two things make this rule survive a real codebase, and I got both wrong
+// first. `focus-visible:` has to be in the pattern — I checked
+// `focus:outline-none` alone, so `focus-visible:outline-none`, which removes
+// the ring on precisely the interaction it exists for, sailed through for
+// weeks. And the word is *bare*: suppressing the outline and substituting a
+// background or a ring is a legitimate pattern, three files did it
+// deliberately, and reporting them would have been reporting a decision. So
+// the rule reads the whole class expression and asks whether anything else
+// answers focus.
+if (config.focusIndicator) {
+  const {
+    substitutePattern = "focus(?:-visible)?:(?!outline-none)(?:bg-|text-|ring-|border-|outline-\\d|shadow-)",
+    banRing = false,
+    why = "An indicator removed with nothing put back leaves a keyboard with no position.",
+  } = config.focusIndicator;
+  const substitute = new RegExp(substitutePattern);
+  /* Class *constants* too. A long class string is as often a `const field =
+     "..."` beside the component as it is an attribute, and the suppression
+     tends to live in exactly those. */
+  const CONST_EXPR = /const \w+ =\s*(?:'[^']*'|"[^"]*"|`[^`]*`)(?:\s*\+\s*\n?\s*(?:'[^']*'|"[^"]*"))*/g;
+  for (const f of files) {
+    if (!eligible("focus", f)) continue;
+    const seen = new Set();
+    for (const m of [...classExpressions(f.code), ...f.code.matchAll(CONST_EXPR)]) {
+      const killed = m[0].match(/focus(?:-visible)?:outline-none/);
+      if (!killed || seen.has(m.index)) continue;
+      seen.add(m.index);
+      if (substitute.test(m[0])) continue;
+      report("focus", why, `${f.rel}:${lineAt(f.code, m.index)}`,
+        `${killed[0]} with nothing put back — put an indicator back, or write plain ` +
+          `outline-none where a wrapper shows the focus instead`);
+    }
+    /* Off by default, because a ring is a perfectly good indicator in most
+       systems. Turn it on only if yours has decided the indicator is an
+       outline: a ring is a box-shadow, so it collides with every elevation
+       token you have, and the collision is invisible until the two land on
+       the same element. */
+    if (banRing) {
+      for (const m of f.code.matchAll(/(?:focus|focus-visible|focus-within):ring-[\w./[\]-]+/g)) {
+        report("focus", why, `${f.rel}:${lineAt(f.code, m.index)}`,
+          `${m[0]} — the indicator is an outline; a ring is a box-shadow and collides with elevation`);
+      }
+    }
+  }
+}
+
+// ── rule: geometry ──────────────────────────────────────────────────────
+// "One card, one radius" is the line every design doc writes and the one it
+// is least likely to keep, because a radius is the cheapest thing in the
+// world to type. The audit behind this repo found five live at once under a
+// document that specified one.
+if (config.radius) {
+  const { banArbitrary = true, allowArbitrary = [], banned = [], tiers = [] } = config.radius;
+  const allowed = allowArbitrary.map((p) => new RegExp(p));
+  for (const f of files) {
+    if (!eligible("radius", f)) continue;
+    if (banArbitrary) {
+      for (const m of f.code.matchAll(/\brounded-\[[^\]]+\]/g)) {
+        /* The one exemption shape worth having: a radius that is a *role*
+           chosen elsewhere, carried by a named variable — a tenant's own
+           theme, say. That is not a sixth number typed here. */
+        if (allowed.some((re) => re.test(m[0]))) continue;
+        report("radius", "An arbitrary radius is not a role.",
+          `${f.rel}:${lineAt(f.code, m.index)}`, `${m[0]} — use one of the named radii`);
+      }
+    }
+    for (const ban of banned) {
+      for (const m of f.code.matchAll(new RegExp(`\\b${ban.class}\\b`, "g"))) {
+        report("radius", ban.why ?? "A radius outside the law.",
+          `${f.rel}:${lineAt(f.code, m.index)}`, ban.detail ?? `${ban.class} is not in the law`);
+      }
+    }
+    /* A container radius on a control, or a control radius on a container,
+       is the exact confusion two tiers exist to prevent — and the tell for
+       which one you are looking at is padding, not the tag. An account
+       picker that is a `<button>` with 28px of padding, an icon, a title and
+       a body is a *card* in every way except the element it happens to use,
+       and the first version of this rule told it to take a control radius. */
+    if (!eligible("radius", f, { only: MARKUP })) continue;
+    for (const tier of tiers) {
+      const hit = new RegExp(tier.pattern);
+      const container = new RegExp(tier.containerPattern ?? "\\bp[xy]?-([5-9]|1\\d)\\b");
+      for (const el of elementsOf(f.code, tier.element)) {
+        const cls = classNameOf(el.tag);
+        if (!cls || !hit.test(cls)) continue;
+        report("radius", tier.why ?? "Two radius tiers, and this one is on the wrong tier.",
+          `${f.rel}:${lineAt(f.code, el.index)}`,
+          container.test(cls) ? tier.onContainer : tier.onControl);
+      }
+    }
+  }
+}
+
+// ── rule: the pointer target ────────────────────────────────────────────
+// WCAG 2.2 §2.5.8 asks for 24 by 24 CSS pixels of any pointer target, and an
+// icon-only control is where that gets lost: the glyph is 16px, the padding
+// is `p-1`, the result is 24 if you are lucky and 20 if the padding came
+// from a different component. The same control usually has no text for
+// assistive technology to read either, so both halves are checked here.
+//
+// Note what the size is computed *from*. An explicit height is trusted and
+// the rule stands down — if somebody wrote `min-h-11` they have thought
+// about it. Only a control whose box is implied by padding is measured.
+if (config.hitTarget) {
+  const {
+    element = "button",
+    glyph = "Icon\\w*|\\w+\\.Icon",
+    minPx = 24,
+    padding = { "p-0": 0, "p-0.5": 2, "p-1": 4, "p-1.5": 6, "p-2": 8, "p-2.5": 10, "p-3": 12 },
+    sizedPattern = "\\b(?:min-h-|h-\\d|size-\\d|min-w-)",
+    assumedGlyph = 24,
+    requireAccessibleName = true,
+  } = config.hitTarget;
+  const glyphEl = new RegExp(`<(?:${glyph})\\b`);
+  const glyphSelfClosing = new RegExp(`<(?:${glyph})[^>]*/>`, "g");
+  const sized = new RegExp(sizedPattern);
+  for (const f of files) {
+    if (!eligible("a11y", f, { only: MARKUP })) continue;
+    for (const el of elementsOf(f.code, element)) {
+      const close = f.code.indexOf(`</${el.name}>`, el.end);
+      if (close === -1) continue;
+      const body = f.code.slice(el.end + 1, close);
+      if (!glyphEl.test(body)) continue;
+      /* A glyph *and* a label is a normal control and none of this applies. */
+      if (body.replace(glyphSelfClosing, "").trim()) continue;
+      const place = `${f.rel}:${lineAt(f.code, el.index)}`;
+      if (requireAccessibleName && !/aria-label|aria-labelledby|title=/.test(el.tag)) {
+        report("a11y", "An icon-only control has no text for a screen reader to read.",
+          place, `icon-only <${el.name}> with no accessible name — give it an aria-label`);
+      }
+      const cls = classNameOf(el.tag) ?? "";
+      if (sized.test(cls)) continue;
+      const pads = Object.keys(padding).filter((p) =>
+        new RegExp(`(?<![\\w-])${p.replace(".", "\\.")}(?![\\w.\\d-])`).test(cls));
+      if (!pads.length) continue;
+      const sizes = [...body.matchAll(/size=\{(\d+)\}/g)].map((x) => Number(x[1]));
+      const box =
+        (sizes.length ? Math.max(...sizes) : assumedGlyph) +
+        2 * Math.max(...pads.map((p) => padding[p]));
+      if (box < minPx) {
+        report("a11y", `WCAG 2.2 §2.5.8 asks ${minPx}px of any pointer target.`,
+          place, `${box}px pointer target — ${pads.join(" + ")} around a ${box - 2 * Math.max(...pads.map((p) => padding[p]))}px glyph`);
+      }
+    }
+  }
+}
+
+// ── rule: an affordance that appears on hover ───────────────────────────
+// A reveal that answers hover and not focus is invisible to a keyboard: you
+// tab to it and the focus ring is sitting on a control at `opacity: 0`. The
+// row's delete, its star, the `...` that only appears when the pointer is
+// near — all of them, and it is one of the few accessibility faults that is
+// also a *bug for everyone*, because the control is reachable and cannot be
+// seen.
+//
+// `pointer-events-none` is exempt and has to be. A caption fading over a
+// cover image can never take focus because it can never be reached, and it
+// is decoration rather than an affordance.
+if (config.hoverReveal) {
+  const {
+    hiddenPattern = "\\bopacity-0\\b",
+    hoverPattern = "(?:group-)?hover:opacity-100",
+    focusPattern = "focus(?:-visible|-within)?:opacity-100|group-focus-within:opacity-100",
+    exemptPattern = "pointer-events-none",
+    why = "A control revealed on hover alone is invisible to a keyboard that has landed on it.",
+    instead = "answer focus-visible and group-focus-within as well as hover",
+  } = config.hoverReveal;
+  const hidden = new RegExp(hiddenPattern);
+  const hover = new RegExp(hoverPattern);
+  const focus = new RegExp(focusPattern);
+  const skip = new RegExp(exemptPattern);
+  for (const f of files) {
+    if (!eligible("reveal", f, { only: MARKUP })) continue;
+    for (const m of classExpressions(f.code)) {
+      const cls = m[0];
+      if (!hidden.test(cls) || skip.test(cls)) continue;
+      if (!hover.test(cls) || focus.test(cls)) continue;
+      report("reveal", why, `${f.rel}:${lineAt(f.code, m.index)}`,
+        `revealed on hover but not on focus — ${instead}`);
+    }
+  }
+}
+
+// ── rule: motion nobody can switch off ──────────────────────────────────
+// Reduced-motion rules are almost always written one class name at a time —
+// a stylesheet turns off the four animations it knows about by name, and
+// there is no blanket `* { animation: none }` anywhere. So a hand-rolled
+// utility pulse keeps animating for somebody who asked their operating
+// system for none of it, and nothing in the toolchain says so.
+//
+// The guard this rule accepts is the stronger form of what it asks for:
+// `motion-safe:` compiles to `prefers-reduced-motion: no-preference`, so the
+// animation never starts rather than being switched off afterwards. Missing
+// that was how an earlier version of this rule reported a guarded element on
+// every single run, which is how a checker teaches people to skim its
+// output — and skimming is one step from `--force`.
+for (const rule of config.motionGuards ?? []) {
+  const re = new RegExp(`\\b${rule.class}\\b`, "g");
+  for (const f of files) {
+    if (!eligible("motion", f)) continue;
+    for (const m of f.code.matchAll(re)) {
+      const before = f.code.slice(Math.max(0, m.index - 24), m.index);
+      const after = f.code.slice(m.index, m.index + 200);
+      if (/motion-safe:$/.test(before)) continue;
+      if (new RegExp(`${rule.class}[^"'\`]*motion-reduce:animate-none`).test(after)) continue;
+      report("motion", rule.why ?? "An animation no reduced-motion rule covers.",
+        `${f.rel}:${lineAt(f.code, m.index)}`,
+        rule.detail ?? `${rule.class} is not covered by any prefers-reduced-motion rule`);
+    }
+  }
+}
+
+// ── rule: fields ────────────────────────────────────────────────────────
+// For a long time the checker this one is derived from inspected exactly one
+// element: `<button>`. Every rule walked the buttons, so `<input>`,
+// `<select>` and `<textarea>` — 171 of them across 77 files — were outside
+// the contract entirely. Radius, the boundary, focus and the accessible name
+// were unchecked on every form control the product had, while the report
+// said the system was green. A check that covers the controls people press
+// and not the ones they type into is not a design system.
+//
+// These are field rules, not use-the-house-component rules. A raw `<input>`
+// is legitimate: a visually hidden file picker, a search box whose wrapper
+// carries the focus. A check that demanded the wrapper everywhere would be
+// arguing about identity rather than about what somebody sees.
+if (config.fields) {
+  const {
+    elements = "input|select|textarea",
+    requireAccessibleName = true,
+    nativePickers = [],
+    boundaryBans = [],
+    radius = null,
+    skipIn = [],
+  } = config.fields;
+  /* A field that renders nothing a person can see or aim at has no geometry
+     to get wrong, and nothing to name. `hidden` is `display: none` — the
+     file picker behind a styled drop zone, reached only by the click that
+     opens it. `sr-only` is *not* the same exemption: that control is still
+     the control, so it keeps every rule including its name. */
+  const INVISIBLE = /type=["'{\s]*(?:hidden|submit|image|button|reset)\b/;
+  const internal = skipIn.map((p) => new RegExp(p));
+  for (const f of files) {
+    if (!eligible("field", f, { only: MARKUP })) continue;
+    const inKit = internal.some((re) => re.test(f.rel));
+    for (const el of elementsOf(f.code, elements)) {
+      const cls = classNameOf(el.tag) ?? "";
+      const place = `${f.rel}:${lineAt(f.code, el.index)}`;
+      if (INVISIBLE.test(el.tag) || /(?<![\w-])hidden(?![\w-])/.test(cls)) continue;
+
+      /* A native date or time control renders as a different widget in every
+         browser, cannot be themed in Safari, and shows its value in the
+         *operating system's* locale rather than the app's — so one person
+         reads 26/08/2026 and the next reads 8/26/2026, which are different
+         days. Worth banning platform-wide, with the one argued exception
+         being a date of birth, where the native control has a typeable year
+         and a month grid is hundreds of chevron presses. */
+      for (const picker of nativePickers) {
+        const m = el.tag.match(new RegExp(`type=["'{\\s]*(${picker.types ?? "date|time|datetime-local|month|week"})\\b`));
+        if (m) {
+          report("field", picker.why ?? "A native picker shows the OS locale, not the app's.",
+            place, `<input type="${m[1]}"> — ${picker.instead ?? "use the app's own picker"}`);
+        }
+      }
+
+      /* An accessible name. WCAG 2.2 §3.3.2 and §4.1.2: a placeholder is not
+         a label. It is the browser's grey hint, it disappears the moment
+         somebody types, and several screen readers never announce it.
+         An `id` counts as named here, deliberately — the label may be a
+         `<label htmlFor>` in this file or a wrapper rendering one from a
+         prop, and chasing the second across components is more machinery
+         than this check should carry. What is caught is the shape that is
+         always wrong: a field with a placeholder and nothing else. */
+      if (requireAccessibleName && !inKit) {
+        const named =
+          /aria-label(?:ledby)?=/.test(el.tag) ||
+          /\bid=/.test(el.tag) ||
+          ancestorsOf(f.code, el.index).some(
+            (a) => a.name === "label" || /\b(?:aria-)?label=/.test(a.tag));
+        if (!named) {
+          report("field", "A placeholder is not a label (WCAG 2.2 §3.3.2).", place,
+            `<${el.name}> has no accessible name — give it an id its <label> points at, or an aria-label`);
+        }
+      }
+
+      if (!cls || inKit) continue;
+      /* A box, not an edge. WCAG 2.2 §1.4.11 asks 3:1 of the boundary
+         somebody needs *to find the control*, and a single `border-b` under
+         a full-bleed input inside a dialog that already frames it is not
+         that. The first version of this rule flagged a command palette's
+         field and was wrong to. */
+      const boxed =
+        /\bborder(?:-(?:[0-9]|\S+))?(?:\s|$)/.test(cls) && !/\bborder-[btlrxy]\b/.test(cls);
+      if (!boxed) continue;
+      if (radius) {
+        const m = cls.match(/\brounded-(\w+)\b/);
+        if (m && !(radius.allowed ?? []).includes(m[1])) {
+          report("field", radius.why ?? "One field radius.", place,
+            `rounded-${m[1]} on a field — the field radius is ${(radius.allowed ?? []).join(" / ")}`);
+        }
+      }
+      for (const ban of boundaryBans) {
+        if (new RegExp(ban.pattern).test(cls)) {
+          report("field", ban.why ?? "The box is the control, so its boundary needs 3:1 (WCAG 2.2 §1.4.11).",
+            place, ban.detail ?? `${ban.pattern} on a field`);
+        }
+      }
+    }
+  }
+}
+
+// ── rule: a raw image ───────────────────────────────────────────────────
+// An expired signed URL or a deleted object renders the browser's
+// broken-image glyph: a different shape and colour in every browser, and one
+// that reads as *the product* being broken rather than as a picture being
+// missing. Not one image in the app this came from had a fallback. A wrapper
+// draws a neutral tile instead and carries the `loading` and `decoding`
+// attributes in one place.
+//
+// The allow-list is by file and every entry states its reason, because a
+// blanket rule nobody can satisfy earns a disable comment in its first week.
+if (config.imageComponent) {
+  const { component, element = "img", allow = [], why } = config.imageComponent;
+  const allowed = allow.map((a) => new RegExp(typeof a === "string" ? a : a.path));
+  for (const f of files) {
+    if (!eligible("media", f, { only: MARKUP })) continue;
+    if (allowed.some((re) => re.test(f.rel))) continue;
+    if (/\.stories\.(tsx|jsx)$/.test(f.rel)) continue;
+    for (const m of f.code.matchAll(new RegExp(`<${element}\\b`, "g"))) {
+      report("media", why ?? "An image with no fallback renders the browser's broken glyph.",
+        `${f.rel}:${lineAt(f.code, m.index)}`,
+        `a raw <${element}> — use ${component}, which carries the fallback, the frame and the loading attributes`);
+    }
+  }
+}
+
+// ── rule: a hand-rolled shell ───────────────────────────────────────────
+// The single most common form of local plausibility and global incoherence.
+// A design doc says an object holding content takes one class, which carries
+// radius, hairline and ambient ramp together. What is live instead is
+// `rounded-xl border border-line bg-surface-1` in two dozen files: a flat
+// outlined rectangle, which is the treatment the same document reserves for
+// a *region* rather than an object. A page of them reads as a wireframe,
+// which is the complaint the whole substrate chapter was written to answer.
+//
+// Each exemption here is a shape, not a file. A border carrying *state* is
+// the important one: a hairline drawn as an inset ring inside a box-shadow
+// cannot be toggled by a variant, so a card that lights its whole border as
+// a drop target would lose the affordance if it converted.
+for (const rule of config.shells ?? []) {
+  const hit = new RegExp(rule.pattern);
+  const requires = (rule.requires ?? []).map((p) => new RegExp(p));
+  const exempt = (rule.exempt ?? []).map((p) => new RegExp(p));
+  for (const f of files) {
+    if (!eligible(rule.rule ?? "surface", f, { only: MARKUP })) continue;
+    for (const m of classExpressions(f.code)) {
+      const cls = m[0];
+      if (!hit.test(cls)) continue;
+      if (!requires.every((re) => re.test(cls))) continue;
+      if (exempt.some((re) => re.test(cls))) continue;
+      report(rule.rule ?? "surface", rule.why ?? "A shell that should have come from the component.",
+        `${f.rel}:${lineAt(f.code, m.index)}`, rule.detail);
+    }
+  }
+}
+
+// ── rule: a flex child that will not shrink ─────────────────────────────
+// `flex-1 overflow-y-auto` without `min-h-0` is a pane that grows past its
+// container. A flex item defaults to `min-height: auto` and refuses to
+// shrink below its content, so `flex-1` becomes a *floor* rather than a
+// share: the scroller runs off the bottom of the frame holding it and —
+// worse — its own height stops being definite, so a child asking for
+// `h-full` resolves against an indefinite parent and grows a *second*
+// scroll container inside the first.
+//
+// That is the two-scrollbar fault, it cost a day, and it is in this repo
+// because it is the most common real layout bug in Tailwind rather than
+// because it is a matter of taste. Four sites had it in one app and the
+// fifth escaped only because its grid carried intrinsic heights that
+// happened to fit.
+if (config.flexShrink) {
+  const axes = config.flexShrink.axes ?? ["y"];
+  const AXIS = {
+    y: { overflow: /\boverflow-y-(?:auto|scroll)\b/, fix: "min-h-0", dim: "height" },
+    x: { overflow: /\boverflow-x-(?:auto|scroll)\b/, fix: "min-w-0", dim: "width" },
+  };
+  for (const f of files) {
+    if (!eligible("layout", f, { only: MARKUP })) continue;
+    for (const m of classExpressions(f.code)) {
+      const cls = m[0];
+      if (!/\bflex-1\b/.test(cls)) continue;
+      for (const axis of axes) {
+        const a = AXIS[axis];
+        if (!a || !a.overflow.test(cls) || new RegExp(`\\b${a.fix}\\b`).test(cls)) continue;
+        report("layout", "A flex child defaults to min-content and will not shrink below it.",
+          `${f.rel}:${lineAt(f.code, m.index)}`,
+          `a flex-1 scroller with no ${a.fix} — it grows past its frame, and an h-full child grows a second scrollbar inside it`);
+      }
+    }
+  }
+}
+
+// ── rule: a type token used as a fill ───────────────────────────────────
+// The failure this catches is invisible in one theme and unreadable in the
+// other, which is the worst shape a colour bug has. A token meant for
+// *type, border and ring* is the same hue as its fill counterpart on light
+// and diverges on dark, where it lightens precisely so it stays legible as
+// text. Put it behind a label and you have white on a pale blue at about
+// 1.9:1 — in exactly one theme, so every screenshot anybody took looked
+// fine.
+//
+// Only when something is written on it. A bare fill with no text is a mark
+// rather than a ground, and the type ramp is the right family for a mark.
+for (const rule of config.inkAsFill ?? []) {
+  const fill = new RegExp(rule.fillPattern);
+  const onIt = new RegExp(rule.textPattern);
+  const exempt = rule.exemptPattern ? new RegExp(rule.exemptPattern) : null;
+  for (const f of files) {
+    if (!eligible("ink-as-fill", f, { only: MARKUP })) continue;
+    for (const m of classExpressions(f.code)) {
+      const ink = fill.exec(m[0]);
+      if (!ink || !onIt.test(m[0])) continue;
+      if (exempt && exempt.test(m[0])) continue;
+      report("ink-as-fill", rule.why ?? "A type token carrying text inverts with the theme.",
+        `${f.rel}:${lineAt(f.code, m.index)}`,
+        rule.detail ? `${ink[0]} — ${rule.detail}` : `${ink[0]} carries text, and it inverts with the theme`);
+    }
+  }
+}
+
 // ── report ──────────────────────────────────────────────────────────────
 const LIMIT = Number(flag("max") ?? 12);
 
 if (!findings.length) {
-  const held = [...new Set(["palette", "type", "icon", "state", "contrast", "copy", "tokens"])];
+  /* Named, so the passing line says what was actually held. A green run
+     that does not name its rules is indistinguishable from a green run
+     whose rules all silently stopped firing. */
+  const held = Object.entries({
+    palette: config.retiredHues || config.retiredHex || config.banArbitraryColor,
+    type: config.typeRamp,
+    icon: config.iconScale,
+    radius: config.radius,
+    focus: config.focusIndicator,
+    a11y: config.hitTarget,
+    field: config.fields,
+    reveal: config.hoverReveal,
+    motion: (config.motionGuards || []).length,
+    media: config.imageComponent,
+    surface: (config.shells || []).length,
+    layout: config.flexShrink,
+    "ink-as-fill": (config.inkAsFill || []).length,
+    state: config.stateOpacity,
+    contrast: (config.contrastFloors || []).length,
+    copy: (config.copyBans || []).length,
+    tokens: config.tokensDeclaredOnce,
+  })
+    .filter(([, on]) => on)
+    .map(([name]) => name);
   const n = `${files.length} file${files.length === 1 ? "" : "s"}`;
   console.log(`✓ design-check: ${n}, nothing drifted (${held.join(", ")}).`);
   process.exit(0);
@@ -406,11 +962,22 @@ const byRule = new Map();
 for (const x of findings) byRule.set(x.rule, [...(byRule.get(x.rule) ?? []), x]);
 
 console.error(`\n✗ design-check: ${findings.length} finding(s) in ${files.length} files\n`);
+/* Grouped by rule, and *within* a rule by the argument behind it. One rule
+   name can carry several arguments — a `layout` group holding both the
+   side-stripe ban and the flex-shrink fault is the normal case, not an edge
+   one — and printing the first argument above all of them states a reason
+   that does not justify what is underneath it. Which is the one thing the
+   report cannot be allowed to do, since every rule here is supposed to be
+   traceable to the sentence that earned it. */
 for (const [rule, list] of byRule) {
   console.error(`  ── ${rule} (${list.length}) ──`);
-  console.error(`     ${list[0].why}`);
-  for (const x of list.slice(0, LIMIT)) console.error(`     ${x.place}  ${x.detail}`);
-  if (list.length > LIMIT) console.error(`     … and ${list.length - LIMIT} more`);
+  const byWhy = new Map();
+  for (const x of list) byWhy.set(x.why, [...(byWhy.get(x.why) ?? []), x]);
+  for (const [why, group] of byWhy) {
+    console.error(`     ${why}`);
+    for (const x of group.slice(0, LIMIT)) console.error(`       ${x.place}  ${x.detail}`);
+    if (group.length > LIMIT) console.error(`       … and ${group.length - LIMIT} more`);
+  }
   console.error("");
 }
 console.error(`${config.docPath ?? "DESIGN.md"} has the reasoning for each of these.\n`);

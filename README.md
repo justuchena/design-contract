@@ -1,6 +1,6 @@
 <div align="center">
 
-# no-ai-slop
+# design-contract
 
 **A design-doc method, the state rules that decide whether an interface
 tells the truth, 152 design-system references, and a checker that enforces
@@ -8,6 +8,11 @@ the rules a machine can hold.**
 
 For anyone building frontends with an AI agent and getting back work that is
 locally plausible and globally incoherent.
+
+*Renamed from `no-ai-slop` on 15 October 2026. The old URL redirects. The
+name is now taken by three unrelated projects, one of them three months older
+and far better known, and a name that says what a thing is beats one that
+says what it is against.*
 
 [![licence: Apache-2.0](https://img.shields.io/badge/licence-Apache--2.0-blue.svg)](LICENSE)
 [![node](https://img.shields.io/badge/node-%E2%89%A518-brightgreen.svg)](package.json)
@@ -29,8 +34,8 @@ locally plausible and globally incoherent.
 ## In one minute
 
 ```bash
-git clone https://github.com/justuchena/no-ai-slop
-cd no-ai-slop
+git clone https://github.com/justuchena/design-contract
+cd design-contract
 
 # the finding that single-ground contrast tools never show you
 node pipeline/contrast.mjs examples/meridian/palette.json
@@ -72,7 +77,14 @@ the checker here had already been written down *and* broken:
 | A retired colour | Still in the stylesheet |
 | No em dashes in copy | Em dashes in copy |
 
-> **A rule nobody runs is a rule nobody keeps.**
+> **A design system written down is a claim. A design system that runs is a
+> contract.**
+>
+> A rule nobody runs is a rule nobody keeps.
+
+That is where the name comes from, and it is the whole argument: `method/`
+writes the claim down, `enforce/` turns it into a contract, and the gap
+between the two is where generated-looking work lives.
 
 So this repo is three layers, and the third is the one that is usually
 missing.
@@ -270,8 +282,8 @@ doc.
 ### As a Claude Code plugin
 
 ```
-/plugin marketplace add justuchena/no-ai-slop
-/plugin install no-ai-slop
+/plugin marketplace add justuchena/design-contract
+/plugin install design-contract
 ```
 
 Then ask for a design pass as normal. The skill routes an agent through four
@@ -281,12 +293,12 @@ devices, check mechanically, then render it and look.
 ### As a skill, cloned
 
 ```bash
-git clone https://github.com/justuchena/no-ai-slop ~/.claude/skills/no-ai-slop
+git clone https://github.com/justuchena/design-contract ~/.claude/skills/design-contract
 ```
 
 [`SKILL.md`](SKILL.md) sits at the repo root because that is where a skill
 loader looks for it. A plugin's `skills/` directory is scanned instead, so
-[`skills/no-ai-slop/SKILL.md`](skills/no-ai-slop/SKILL.md) is generated from
+[`skills/design-contract/SKILL.md`](skills/design-contract/SKILL.md) is generated from
 the root copy by [`pipeline/derive-skill.mjs`](pipeline/derive-skill.mjs),
 with its links repointed and a staleness check in `npm run verify`. Edit the
 root one.
@@ -304,8 +316,8 @@ path is all they need:
 ```json
 {
   "scripts": {
-    "design": "node ../no-ai-slop/enforce/design-check.mjs",
-    "design:tokens": "node ../no-ai-slop/pipeline/derive.mjs src/styles/tokens.css --check"
+    "design": "node ../design-contract/enforce/design-check.mjs",
+    "design:tokens": "node ../design-contract/pipeline/derive.mjs src/styles/tokens.css --check"
   }
 }
 ```
@@ -314,7 +326,7 @@ Node 18 or newer. `playwright` is an optional peer, needed only by
 `pipeline/shots.mjs`.
 
 > **Not on npm yet.** The manifest is prepared as
-> `@justuchena/no-ai-slop` — scoped, because the unscoped `no-ai-slop` on npm
+> `@justuchena/design-contract` — scoped, because the unscoped `design-contract` on npm
 > is an unrelated project. Until it is published, clone it.
 
 ---

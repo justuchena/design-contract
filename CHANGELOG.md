@@ -1,5 +1,43 @@
 # Changelog
 
+## 0.4.0 — 2026-10-15
+
+Renamed from `no-ai-slop` to `design-contract`.
+
+The old name is held by three unrelated projects. `petergyang/no-ai-slop` is
+three months older, has 12,384 stars and edits prose against eighteen named
+patterns. The unscoped npm package belongs to a third party and reports AI
+anti-patterns in agent sessions. This one specifies interfaces. Nothing
+collided technically, since GitHub namespaces by owner, but searching the
+name finds the other two, and three projects opposing the same thing in
+different domains under one name is a name doing no work.
+
+`design-contract` is the argument this repo already made, in two words:
+
+> A design system written down is a claim. A design system that runs is a
+> contract.
+
+`method/` writes the claim down, `enforce/` turns it into a contract, and the
+gap between them is where generated-looking work lives. That sentence had sat
+at the top of the engine since 0.1.0 and was cut in 0.3.1 while leaning the
+comments, which was a bad trim: it is the clearest statement of the thesis
+and belonged where a reader meets it. It is back, in the README.
+
+A name that says what a thing *is* also beats one that says what it is
+*against*, which is the same reason `method/references.md` tells people to
+derive a design from their own product rather than borrow a device.
+
+- GitHub repo, the six tags, plugin and marketplace ids, skill name and its
+  derived copy at `skills/design-contract/`, the npm manifest and lockfile,
+  issue templates, and every internal link. The old URL redirects.
+- `method/voice.md` and the example config keep their references to
+  petergyang's skill, which is credited rather than copied.
+- Helios's vendored-engine sync reads `DESIGN_CONTRACT` rather than
+  `NO_AI_SLOP`.
+
+The `design-check`, `design-contrast`, `design-derive` and `design-shots`
+binaries keep their names. They were never branded.
+
 ## 0.3.1 — 2026-10-15
 
 Comment style, and a guard on the structure the mutation report reads.
@@ -242,12 +280,12 @@ ran.
 Installable as a Claude Code plugin.
 
 ```
-/plugin marketplace add justuchena/no-ai-slop
-/plugin install no-ai-slop
+/plugin marketplace add justuchena/design-contract
+/plugin install design-contract
 ```
 
 - `.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json`.
-- `skills/no-ai-slop/SKILL.md`, generated from the root `SKILL.md` by
+- `skills/design-contract/SKILL.md`, generated from the root `SKILL.md` by
   `pipeline/derive-skill.mjs` with its link targets repointed two levels up.
 
   Both locations are needed and neither is negotiable: a cloned skill is read

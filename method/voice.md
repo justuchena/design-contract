@@ -89,7 +89,9 @@ string a visitor can read, they are checkable, and they have to be in context
 when a page is being built. They are not a theory of good writing.
 
 For that, use **[petergyang/no-ai-slop](https://github.com/petergyang/no-ai-slop)**
-(MIT). It is a skill that edits prose against 18 named patterns, and it is
+(MIT). This pack was called `no-ai-slop` until it noticed that one, which is
+three months older and considerably better known; the rename is in the
+README. It is a skill that edits prose against 18 named patterns, and it is
 better at that job than anything I would write: binary contrasts ("it's not
 X, it's Y"), throat-clearing openers, colon reveals, faux-insight setups,
 importance puffery, weasel attribution, synonym cycling, negative listing,

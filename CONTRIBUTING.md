@@ -85,7 +85,7 @@ Do not edit either by hand. `npm run verify` fails when they are stale.
 | Generated | From | By |
 |---|---|---|
 | `examples/meridian/design-tokens.json` | `examples/meridian/tokens.css` | `pipeline/derive.mjs` |
-| `skills/no-ai-slop/SKILL.md` | `SKILL.md` | `pipeline/derive-skill.mjs` |
+| `skills/design-contract/SKILL.md` | `SKILL.md` | `pipeline/derive-skill.mjs` |
 
 The skill copy exists because the two install paths want the file in
 different places and neither is negotiable: a cloned skill is read from the

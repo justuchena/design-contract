@@ -1,13 +1,13 @@
 {
-  "name": "no-ai-slop",
-  "version": "0.3.1",
+  "name": "design-contract",
+  "version": "0.4.0",
   "description": "Build frontend UI that does not read as generated. A design-doc method, the state rules that decide whether an interface tells the truth, 152 design-system references, and a checker that enforces the rules a machine can hold \u2014 geometry, colour, punctuation, measured contrast floors, focus, pointer targets and labels, and deliberately not composition.",
   "author": {
     "name": "Uchenna Ngozi",
     "url": "https://github.com/justuchena"
   },
-  "homepage": "https://github.com/justuchena/no-ai-slop#readme",
-  "repository": "https://github.com/justuchena/no-ai-slop",
+  "homepage": "https://github.com/justuchena/design-contract#readme",
+  "repository": "https://github.com/justuchena/design-contract",
   "license": "Apache-2.0",
   "keywords": [
     "design-system",

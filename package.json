@@ -1,6 +1,6 @@
 {
-  "name": "@justuchena/no-ai-slop",
-  "version": "0.3.1",
+  "name": "@justuchena/design-contract",
+  "version": "0.4.0",
   "description": "A design-doc method, the state rules that decide whether an interface tells the truth, 152 design-system references, and a checker that enforces the rules a machine can hold.",
   "keywords": [
     "design-system",
@@ -16,11 +16,11 @@
     "ai-agents",
     "agent-skill"
   ],
-  "homepage": "https://github.com/justuchena/no-ai-slop#readme",
-  "bugs": "https://github.com/justuchena/no-ai-slop/issues",
+  "homepage": "https://github.com/justuchena/design-contract#readme",
+  "bugs": "https://github.com/justuchena/design-contract/issues",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/justuchena/no-ai-slop.git"
+    "url": "git+https://github.com/justuchena/design-contract.git"
   },
   "license": "Apache-2.0",
   "author": {

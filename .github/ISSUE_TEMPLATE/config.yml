@@ -1,7 +1,7 @@
 blank_issues_enabled: true
 contact_links:
   - name: Resource list correction
-    url: https://github.com/justuchena/no-ai-slop/edit/main/resources/README.md
+    url: https://github.com/justuchena/design-contract/edit/main/resources/README.md
     about: A licence has changed or a link is dead — edit it directly and open a PR.
   - name: Reference package content
     url: https://github.com/nexu-io/open-design

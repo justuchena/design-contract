@@ -1,21 +1,21 @@
 {
-  "name": "no-ai-slop",
+  "name": "design-contract",
   "description": "A design-doc method, the state rules that decide whether an interface tells the truth, 152 design-system references, and a checker that enforces the rules a machine can hold.",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "owner": {
     "name": "Uchenna Ngozi",
     "url": "https://github.com/justuchena"
   },
   "metadata": {
-    "repository": "https://github.com/justuchena/no-ai-slop"
+    "repository": "https://github.com/justuchena/design-contract"
   },
   "plugins": [
     {
-      "name": "no-ai-slop",
-      "displayName": "no-ai-slop",
+      "name": "design-contract",
+      "displayName": "design-contract",
       "description": "Build frontend UI that does not read as generated. Carries the design-doc method, 152 design-system reference packages, a configurable design checker, and the contrast and token tooling the method's measurements depend on.",
       "source": "./",
-      "homepage": "https://github.com/justuchena/no-ai-slop"
+      "homepage": "https://github.com/justuchena/design-contract"
     }
   ]
 }

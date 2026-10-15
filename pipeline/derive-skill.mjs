@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * SKILL.md → skills/no-ai-slop/SKILL.md. One source, one derived copy.
+ * SKILL.md → skills/design-contract/SKILL.md. One source, one derived copy.
  *
  *     node pipeline/derive-skill.mjs           # write
  *     node pipeline/derive-skill.mjs --check   # fail if the copy is stale
@@ -31,7 +31,7 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const SOURCE = join(ROOT, "SKILL.md");
-const OUT_DIR = join(ROOT, "skills", "no-ai-slop");
+const OUT_DIR = join(ROOT, "skills", "design-contract");
 const OUT = join(OUT_DIR, "SKILL.md");
 const CHECK = process.argv.includes("--check");
 
@@ -74,11 +74,11 @@ const derived = `${body.slice(0, cut)}${notice}${body.slice(cut)}`;
 if (CHECK) {
   const current = existsSync(OUT) ? readFileSync(OUT, "utf8") : "";
   if (current !== derived) {
-    console.error(`✗ skills/no-ai-slop/SKILL.md is stale.`);
+    console.error(`✗ skills/design-contract/SKILL.md is stale.`);
     console.error("  Run: node pipeline/derive-skill.mjs");
     process.exit(1);
   }
-  console.log("✓ skills/no-ai-slop/SKILL.md matches SKILL.md");
+  console.log("✓ skills/design-contract/SKILL.md matches SKILL.md");
   process.exit(0);
 }
 
@@ -88,4 +88,4 @@ writeFileSync(OUT, derived);
 const rewritten = [...source.matchAll(/\]\((?!https?:|#|\.\.\/)([^)]+)\)/g)].filter((m) =>
   TOP_LEVEL.includes(m[1].split("/")[0].split("#")[0]),
 ).length;
-console.log(`✓ skills/no-ai-slop/SKILL.md — ${rewritten} link(s) repointed`);
+console.log(`✓ skills/design-contract/SKILL.md — ${rewritten} link(s) repointed`);

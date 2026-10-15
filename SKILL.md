@@ -1,10 +1,10 @@
 ---
-name: no-ai-slop
+name: design-contract
 description: Build frontend UI that does not read as generated. Use when designing or implementing any web interface, component, page, landing page, dashboard or app surface; when setting up a design system or design tokens; when writing or enforcing a design doc; when asked to review UI for quality, consistency, contrast or accessibility; or when a reference site or screenshot is being used as inspiration. Carries a design-doc method, the state and honesty rules that decide whether an interface tells the truth, 152 real design-system references, and a configurable checker that enforces the rules a machine can hold.
 license: see LICENSE and NOTICE at the repo root
 ---
 
-# no-ai-slop
+# design-contract
 
 Generated-looking UI is not a taste problem. It is a **specification** problem.
 A model with no design doc invents one per file, so the work is locally

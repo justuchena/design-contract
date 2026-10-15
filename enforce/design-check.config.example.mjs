@@ -122,6 +122,31 @@ export default {
       pattern: "—",
       why: "No em dashes anywhere a visitor can read. Comments are exempt and already stripped.",
       detail: "an em dash in copy — rewrite the punctuation",
+      limits: "it cannot tell copy from an identifier: a dash inside a key, a URL or a test name is the false positive to expect.",
+    },
+    /* The two prose patterns from petergyang/no-ai-slop (MIT) that a regex
+       can actually hold. That skill names eighteen and edits a draft against
+       them, which is a different job from this one and a better fit for it:
+       see method/voice.md. These two are here because UI copy is where they
+       show up and a checker can see them.
+
+       The binary contrast is the one worth having at any cost. It is the
+       single most recognisable generated construction in English, it sounds
+       wise, and it says nothing: both halves survive because the sentence
+       never had to decide which it meant. */
+    {
+      rule: "copy",
+      pattern: "[Ii]t'?s not (?:just )?[\\w ]{1,30},? (?:it'?s|but)\\b",
+      why: "The binary contrast says nothing: state the second half and delete the first.",
+      detail: "\"it's not X, it's Y\" — say Y",
+      limits: "only the commonest phrasing. The same shape written across two sentences walks past it.",
+    },
+    {
+      rule: "copy",
+      pattern: "\\b(?:[Dd]elve|[Ll]everage|[Ss]eamless(?:ly)?|[Rr]obust|[Uu]nlock the|[Ee]levate your)\\b",
+      why: "Register, not vocabulary: each of these is a word a product page reaches for when it has not decided what it does.",
+      detail: "a stock marketing verb — say what the thing actually does",
+      limits: "`leverage` and `robust` are legitimate in a technical sentence. Scope this to the directories that hold visitor-facing copy, or drop it.",
     },
   ],
 

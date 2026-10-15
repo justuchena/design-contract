@@ -82,6 +82,38 @@ Three things about this table that make it work:
   Precision beats warmth in a document somebody signs. An unstated exception
   becomes either a violated rule or a wrong legal document.
 
+## The prose layer is somebody else's job, and they do it better
+
+These two rules are the ones that belong in a *design doc*: they govern every
+string a visitor can read, they are checkable, and they have to be in context
+when a page is being built. They are not a theory of good writing.
+
+For that, use **[petergyang/no-ai-slop](https://github.com/petergyang/no-ai-slop)**
+(MIT). It is a skill that edits prose against 18 named patterns, and it is
+better at that job than anything I would write: binary contrasts ("it's not
+X, it's Y"), throat-clearing openers, colon reveals, faux-insight setups,
+importance puffery, weasel attribution, synonym cycling, negative listing,
+dramatic fragmentation, rhetorical setups, fake-profound kickers,
+summary-recap endings, plus banned words and empty adverbs.
+
+The division of labour is clean, and worth stating so neither of us has to
+guess. That skill edits a draft. This pack specifies an interface. They meet
+in exactly one place, which is the copy inside a component, and the rule
+there is: write it against the two rules below, then run that skill over it
+if it is longer than a label.
+
+Two of its findings arrived at the same place I did, independently, and that
+is the most useful thing about reading it:
+
+- **Its pattern 18 is em dashes.** Same conclusion, from prose rather than
+  from a codebase sweep.
+- **Its "formatting slop" is decorative emoji, mid-sentence bold and
+  unnecessary bullets.** This repo had eighteen severity markers scattered
+  through its own source before somebody pointed out they encoded nothing.
+
+When two people auditing different material ban the same two things, that is
+better evidence than either of us arguing for it alone.
+
 ## Why these belong in the design doc rather than a content style guide
 
 Because the design doc is the file that gets read before someone builds a

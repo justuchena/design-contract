@@ -1,6 +1,6 @@
 {
   "name": "@justuchena/no-ai-slop",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "A design-doc method, the state rules that decide whether an interface tells the truth, 152 design-system references, and a checker that enforces the rules a machine can hold.",
   "keywords": [
     "design-system",
@@ -38,7 +38,8 @@
     "design-derive": "pipeline/derive.mjs",
     "design-shots": "pipeline/shots.mjs",
     "design-commit-check": "enforce/commit-check.mjs",
-    "design-derive-skill": "pipeline/derive-skill.mjs"
+    "design-derive-skill": "pipeline/derive-skill.mjs",
+    "design-mutation-report": "pipeline/mutation-report.mjs"
   },
   "scripts": {
     "test": "node enforce/test.mjs",
@@ -47,7 +48,10 @@
     "derive:check": "node pipeline/derive.mjs examples/meridian/tokens.css --check",
     "verify": "node enforce/test.mjs && node pipeline/derive.mjs examples/meridian/tokens.css --check && node pipeline/derive-skill.mjs --check && node enforce/commit-check.mjs --range all",
     "commits": "node enforce/commit-check.mjs --range all",
-    "skill": "node pipeline/derive-skill.mjs"
+    "skill": "node pipeline/derive-skill.mjs",
+    "mutate": "stryker run",
+    "mutate:preflight": "stryker run --dryRunOnly",
+    "mutate:report": "node pipeline/mutation-report.mjs"
   },
   "files": [
     "enforce",
@@ -68,5 +72,8 @@
     "playwright": {
       "optional": true
     }
+  },
+  "devDependencies": {
+    "@stryker-mutator/core": "^10.0.0"
   }
 }

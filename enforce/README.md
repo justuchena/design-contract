@@ -126,6 +126,75 @@ checker holds rots exactly the way a hand-maintained design rule does, and
 this repo should not demonstrate its own problem in the file meant to solve
 it.
 
+## Proving the tests are tests
+
+```bash
+npm install                  # the one thing here that needs it
+npm run mutate:preflight     # resolve targets, run the suite, no mutants
+npm run mutate               # the full sweep, about 90 seconds
+npm run mutate:report        # which rules the survivors cluster in
+```
+
+This repo's argument is that a rule nobody runs is a rule nobody keeps. The
+sequel is why `stryker.conf.mjs` exists: **a test that cannot fail is a test
+nobody keeps.** 56 green assertions say every rule fired once on a fixture
+built to make it fire. They say nothing about the boundary, and a checker
+made of regexes lives entirely at the boundary.
+
+So the sweep changes the engine on purpose and asks whether the suite
+notices. The first run scored **48.95%**, and the number was the least
+useful thing in it. `npm run mutate:report` buckets the survivors by the
+rule they fall inside, and that found three specific defects:
+
+- **The radius tier rule had config and no case.** The fixture config
+  declared it; there was not one `rounded-2xl` in the fixture. The whole
+  card-versus-control branch was dead, so every mutant in it survived. A
+  rule configured and never triggered is this repo's own subject, one level
+  in.
+- **No test ran a config with rules absent.** Every `OptionalChaining` and
+  `UnaryOperator` mutant survived, 20 of them at a flat 0%, which is the
+  signature of a branch nothing reaches. The branch was every
+  `config.x?.length` guard, so *what happens when a rule is not configured*
+  was entirely untested — including the `off:` reporting that exists
+  precisely because a rule that is off has verified nothing.
+- **The focus rule's class-constant half had never executed.** 22 mutants
+  inside one pattern survived together. The rule reads a class list held in a
+  `const` as well as one written on an element, and nothing had ever given it
+  one. That is not a weak test, it is a documented feature with nothing
+  behind it. It works, as it turns out. Nobody knew.
+
+Each was a few lines of fixture. Fixing them took the score from 48.95% to
+**63.15%**, and the focus rule from 33% to 45% on its own. The number
+mattered much less than a discouraging percentage turning into three closed
+holes.
+
+What is still open is readable off the same table, and it is honest to say
+so: the focus rule and the field rule are the two with real room left, both
+because one pattern in each has many branches and the fixture exercises two
+or three of them. That is the next slice, not a crisis.
+
+**The score is a diagnostic, not a target, and `break` is null on purpose.**
+Chasing a percentage on regex-dense code buys fixture bloat: many mutants
+here are *equivalent*, changing a pattern in a way no real input
+distinguishes, and writing a case to kill one of those tests nothing. A
+threshold that fails a build would also teach people to pass `--force`, which
+is this repo's argument about design rules applied to itself.
+
+`StringLiteral` mutants are excluded, and that is the judgement in there most
+worth arguing with. They were 342 of 1,291 and scored 27.5%, which looks
+damning and is mostly an artifact: almost every string in the engine is the
+`why` or `detail` prose the report prints, and the suite deliberately does
+not pin report wording. It should not — a test that asserts a sentence fails
+every time the sentence improves. The cost, stated in the config so it is not
+a hidden hole: about 94 legitimate kills go with them, the rule *names* among
+them, and those stay covered by `countFor()`.
+
+**One more thing it fixed, which was not about coverage at all.** Two
+assertions were pinned to fixture line numbers, and both broke the moment the
+sweep asked for a new case above them. A test pinned to a line number is a
+test about the fixture's layout. They are content-based now, and the two that
+legitimately name a line say why.
+
 ## Three decisions that make it usable
 
 **Comments are stripped before every rule runs.** A checker that fires on the

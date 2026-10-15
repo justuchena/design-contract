@@ -1,6 +1,6 @@
 {
   "name": "no-ai-slop",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Build frontend UI that does not read as generated. A design-doc method, the state rules that decide whether an interface tells the truth, 152 design-system references, and a checker that enforces the rules a machine can hold — geometry, colour, punctuation, measured contrast floors, focus, pointer targets and labels, and deliberately not composition.",
   "author": {
     "name": "Uchenna Ngozi",

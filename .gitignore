@@ -1,5 +1,11 @@
 node_modules/
 .shots/
+
+# Mutation reports. The score is a diagnostic to read, not an artifact to
+# keep: committing one invites arguing with a number instead of reading
+# which rules the survivors cluster in. See stryker.conf.mjs.
+.cache/
+.stryker-tmp/
 *.local.*
 .DS_Store
 

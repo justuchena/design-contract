@@ -55,7 +55,7 @@ console.log("\nexit code");
 check("non-zero when findings exist", status === 1, `got ${status}`);
 
 console.log("\ntotals");
-check("27 findings in 5 files", total === 27, `got ${total}`);
+check("30 findings in 5 files", total === 30, `got ${total}`);
 
 console.log("\nrules fire");
 const expected = {
@@ -71,8 +71,8 @@ const expected = {
   copy: 1,
   tokens: 1,
   /* The interaction rules. */
-  focus: 1,
-  radius: 1,
+  focus: 2, // one on an attribute, one in a class constant
+  radius: 3, // an arbitrary value, and both tiers
   a11y: 2, // the 22px target, and the nameless icon-only button
   reveal: 1,
   motion: 1,
@@ -112,6 +112,12 @@ check(
   countFor("tokens") === 1,
   "only the cross-sheet duplicate should fire",
 );
+/* ⚠️ **The two assertions below are the only ones allowed to name a line,
+   and both earn it.** One is *about* line numbers; the other is about a
+   specific comment. Both live in `violations.tsx`, which is frozen for this
+   reason — every line-number assertion written against `interaction.tsx`
+   has already broken once, on the first run that added a case to it. A test
+   pinned to a line number is a test about the fixture's layout. */
 check(
   "line numbers survive comment blanking",
   /violations\.tsx:(9|10|11)\b/.test(out),
@@ -125,17 +131,22 @@ check(
 console.log("\nnegative cases (the interaction rules)");
 check(
   "an outline suppressed WITH a substitute is a decision, not a leftover",
-  countFor("focus") === 1,
+  countFor("focus") === 2,
   "focus-visible:outline-none beside focus-visible:bg-* must not fire",
 );
 check(
   "a radius carried by a named variable is a role chosen elsewhere",
-  countFor("radius") === 1,
-  "rounded-[var(--site-radius)] must not fire",
+  countFor("radius") === 3 && !out.includes("--site-radius"),
+  "rounded-[var(--site-radius)] must not fire; the other three radius findings must",
 );
 check(
   "an explicit height stands the pointer-target rule down",
-  !/interaction\.tsx:26\b/.test(out),
+  /* The exempt control is `min-h-11 p-1` around a 14px glyph, which is the
+     same geometry as the one that fires. So if the rule stopped standing
+     down, this exact detail would print twice rather than once. Counted
+     rather than pinned to a line: a line number is a fact about the
+     fixture's layout, and asserting one makes every added case a failure. */
+  (out.match(/22px pointer target/g) ?? []).length === 1,
   "min-h-11 means somebody thought about the box",
 );
 check(
@@ -160,7 +171,11 @@ check(
 );
 check(
   "an invisible field has no geometry to get wrong and nothing to announce",
-  !/interaction\.tsx:(6[5-9])\b/.test(out),
+  /* Asserted on content, not on a line range. The original pinned
+     `interaction.tsx:65-69` and broke the first time the fixture gained a
+     case above it, which makes it a test about the fixture's layout rather
+     than about the rule. */
+  countFor("field") === 3 && !/type="(?:hidden|file)"/.test(out),
   "type=hidden and the sr-only file picker are exempt",
 );
 check(
@@ -212,6 +227,58 @@ check(
    docs are checked against it rather than trusted. A hand-maintained count
    of what the checker holds rots exactly the way a hand-maintained design
    rule does, and this repo should not demonstrate its own problem. */
+/* Both of these came out of the first mutation run, and neither was visible
+   from a green suite. */
+console.log("\nwhat mutation testing found missing");
+check(
+  "the focus rule reads a class list held in a constant, not only an attribute",
+  /focus-visible:outline-none with nothing put back/.test(out) &&
+    /focus:outline-none with nothing put back/.test(out),
+  "22 mutants in CONST_EXPR survived at once: the branch was documented and never executed",
+);
+check(
+  "the radius tier rule is actually triggered, not merely configured",
+  /rounded-2xl on a control/.test(out) && /rounded-2xl on a card/.test(out),
+  "it had config and no fixture case, so the whole branch was dead",
+);
+
+/* A rule that is off has verified nothing, and until this ran the suite had
+   only ever used one fully-populated config — so every `config.x?.length`
+   guard was unreached. 20 OptionalChaining and UnaryOperator mutants
+   survived at a flat 0%, which is the signature of exactly that. */
+let sparse;
+let sparseStatus = 0;
+try {
+  sparse = execFileSync(
+    process.execPath,
+    [join(HERE, "design-check.mjs"), "--config", "minimal.config.mjs"],
+    { cwd: FIXTURE, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] },
+  );
+} catch (e) {
+  sparse = `${e.stdout ?? ""}${e.stderr ?? ""}`;
+  sparseStatus = e.status;
+}
+check(
+  "a config with eighteen rules absent does not crash",
+  sparseStatus === 1 && /1 finding\(s\)/.test(sparse),
+  `got status ${sparseStatus}`,
+);
+check(
+  "it reports how few rules were on",
+  /\b1 of 19 rules on\b/.test(sparse),
+  "a sparse run must not read like a full one",
+);
+check(
+  "it names every rule that is off",
+  /off: palette, type, icon/.test(sparse) && /\(your bans\)/.test(sparse),
+  "a rule that is off has verified nothing",
+);
+check(
+  "a rule that is off reports nothing at all",
+  !/── (?:palette|surface|a11y|focus) \(/.test(sparse),
+  "only the one configured rule may fire",
+);
+
 console.log("\nthe rule count is derived, not asserted in prose");
 const engineCount = Number(out.match(/\b\d+ of (\d+) rules on\b/)?.[1] ?? -1);
 check("the engine reports a rule count", engineCount > 0, `got ${engineCount}`);

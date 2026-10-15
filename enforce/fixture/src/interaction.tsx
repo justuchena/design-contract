@@ -6,17 +6,46 @@
 
    Each pair is positive first, then the negative beside it. */
 
+/* A class list held in a constant rather than written on the element. The
+   focus rule reads these as well as attributes, because a long class string
+   is as often a `const` beside the component as it is inline, and the
+   suppression tends to live in exactly those.
+
+   🔴 **Mutation testing is why this is here, and it found more than a weak
+   test.** Twenty-two mutants inside the rule's `CONST_EXPR` pattern survived
+   at once, which is the signature of a branch nothing reaches: the fixture
+   had only ever used JSX attributes, so the const-reading half of the rule
+   was *documented and never once executed*. That is not a gap in the tests,
+   it is a feature claim with nothing behind it. */
+const DEAD_FOCUS = 'rounded px-2 focus-visible:outline-none text-slate-700';
+
 export const Interaction = () => (
   <div>
     {/* focus: suppressed with nothing put back, then suppressed with a
         substitute, which is a decision rather than a leftover. */}
     <button className="focus:outline-none">Bare</button>
     <button className="focus-visible:outline-none focus-visible:bg-slate-100">Deliberate</button>
+    <button className={DEAD_FOCUS}>Suppressed in a constant</button>
 
     {/* radius: an arbitrary value, then one carried by a named variable,
         which is a role chosen elsewhere rather than a sixth number. */}
     <div className="rounded-[7px]">Arbitrary</div>
     <div className="rounded-[var(--site-radius)]">A tenant's own theme</div>
+
+    {/* radius tiers: the container radius on a control, then the same class
+        on something that is a card in every way except the tag it uses.
+        Padding is the tell, which is why both of these are buttons.
+
+        This pair exists because mutation testing found the tier rule had
+        been *configured* in the fixture config and never once triggered:
+        zero `rounded-2xl` anywhere in the fixture, so the whole branch was
+        dead and every mutant in it survived. A rule with config and no
+        case is the exact failure this repo is about, one level in. */}
+    <button className="rounded-2xl px-2 py-1">A control</button>
+    <button className="rounded-2xl p-6">
+      <Icon size={16} />
+      A card that happens to be a button
+    </button>
 
     {/* hit target: 14px glyph inside p-1 is 22, then the same control with
         an explicit height, which stands the rule down. */}

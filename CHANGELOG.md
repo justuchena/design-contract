@@ -1,5 +1,70 @@
 # Changelog
 
+## 0.3.0 — 2026-10-15
+
+Mutation testing, because a test that cannot fail is a test nobody keeps.
+
+The repo's argument is that a rule nobody runs is a rule nobody keeps, and
+the checker had 56 green assertions standing behind 19 rules. Green said
+every rule fired once on a fixture built to make it fire. It said nothing
+about the boundary, and a checker made of regexes lives entirely at the
+boundary.
+
+- `stryker.conf.mjs`, with the `command` runner, which is the only one that
+  works here: the suite is a plain script that runs the checker as a *child
+  process*, so an in-process runner would instrument a module the test never
+  imports and report all 1,319 mutants as survived.
+- `npm run mutate:preflight` resolves targets and runs the suite without
+  executing a mutant, which is the cheap lane that belongs in required CI.
+  `npm run mutate` is the full sweep: about 90 seconds, `break: null`,
+  non-blocking. A threshold that fails a build teaches people to pass
+  `--force`, which is this repo's argument about design rules aimed at
+  itself.
+- `pipeline/mutation-report.mjs` (`npm run mutate:report`) buckets surviving
+  mutants by the rule they fall inside, using the rule headers already in
+  `design-check.mjs` as the section map, so nothing is maintained by hand.
+  This is the part that mattered: a flat 48.95% says "the suite is weak",
+  and the same run bucketed says exactly which three things are wrong.
+
+### What the first run found
+
+Three defects, none visible from a green suite, each a few lines of fixture:
+
+- **The radius tier rule had config and no case.** The fixture config
+  declared the card-versus-control tier logic and there was not one
+  `rounded-2xl` in the fixture, so the branch was dead and every mutant in
+  it survived. A rule configured and never triggered is this repo's own
+  subject, one level in.
+- **No test ran a config with rules absent.** Every `OptionalChaining` and
+  `UnaryOperator` mutant survived, 20 at a flat 0%, which is the signature
+  of a branch nothing reaches: every `config.x?.length` guard. So *what
+  happens when a rule is not configured* was untested, including the `off:`
+  reporting added in 0.2.1 precisely because a rule that is off has verified
+  nothing. `enforce/fixture/minimal.config.mjs` covers it now.
+- **The focus rule's class-constant half had never executed.** 22 mutants
+  inside one pattern survived together. The rule reads a class list held in
+  a `const` as well as one written on an element, and nothing had ever given
+  it one — a documented feature with nothing behind it. It works. Nobody
+  knew.
+
+48.95% → **63.15%**, and the focus rule 33% → 45%. The remaining room is in
+the focus and field rules, both because one pattern in each has more branches
+than the fixture exercises.
+
+### Fixed
+
+- **Two assertions were pinned to fixture line numbers**, and both broke the
+  first time the sweep asked for a case above them. A test pinned to a line
+  number is a test about the fixture's layout. Content-based now, and the two
+  that legitimately name a line say why they are allowed to.
+
+### Note
+
+`@stryker-mutator/core` is this repo's first dependency: 166 packages, 59MB,
+and `devDependencies` only. `npm run verify` still runs with nothing
+installed, so the gate a contributor meets on a fresh clone is unchanged and
+mutation testing is strictly opt-in.
+
 ## 0.2.1 — 2026-10-15
 
 What a run cannot tell you, and the package becoming installable.

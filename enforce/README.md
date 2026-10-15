@@ -168,10 +168,19 @@ Each was a few lines of fixture. Fixing them took the score from 48.95% to
 mattered much less than a discouraging percentage turning into three closed
 holes.
 
-What is still open is readable off the same table, and it is honest to say
-so: the focus rule and the field rule are the two with real room left, both
-because one pattern in each has many branches and the fixture exercises two
-or three of them. That is the next slice, not a crisis.
+A second pass took the focus rule to 49% and the field rule to 60%, and the
+overall score to 63.66%. The gain from that pass was five mutants, which is
+the point at which to stop: the survivors left are increasingly *equivalent*
+ones, and a case written to kill one of those tests nothing.
+
+One thing the sweep caught about itself. `mutation-report.mjs` reads the
+engine's own `// ── rule: …` dividers as its section map, which is what makes
+it maintenance-free, and it means the tool is only as good as that structure.
+Nine dividers were lost at once while leaning the file's comments, and the
+report went on printing a plausible table that attributed 328 mutants to one
+rule. Nothing checked, and the numbers were the only tell. `test.mjs` now
+asserts the divider count and that they are all padded alike, which is a
+blunt guard and the one that would have caught it.
 
 **The score is a diagnostic, not a target, and `break` is null on purpose.**
 Chasing a percentage on regex-dense code buys fixture bloat: many mutants

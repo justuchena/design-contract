@@ -287,6 +287,24 @@ check(
   "only the one configured rule may fire",
 );
 
+/* The section dividers in the engine are load-bearing: mutation-report.mjs
+   buckets survivors by them, so losing one silently misattributes hundreds of
+   mutants and still prints a plausible table. Nine went missing at once when
+   the comments were leaned, and nothing caught it. A count is a blunt guard
+   and it is the one that would have. Adding a rule means bumping it on
+   purpose. */
+console.log("\nthe engine keeps its section structure");
+{
+  const engine = readFileSync(join(HERE, "design-check.mjs"), "utf8");
+  const headers = engine.match(/^\/\/ ── rule: .+$/gm) ?? [];
+  check("21 rule dividers in design-check.mjs", headers.length === 21, `got ${headers.length}`);
+  check(
+    "every divider is padded to the same width",
+    headers.every((h) => h.length === headers[0].length),
+    "a short divider is a sign one was hand-written rather than copied",
+  );
+}
+
 console.log("\nthe rule count is derived, not asserted in prose");
 const engineCount = Number(out.match(/\b\d+ of (\d+) rules on\b/)?.[1] ?? -1);
 check("the engine reports a rule count", engineCount > 0, `got ${engineCount}`);

@@ -76,7 +76,7 @@ white is a ramp with a trap in it:
 | `--fg-subtle` | `#6b7280` | 4.71:1 | **4.37:1** |
 | — | `#9aa1ad` | 2.53:1 | 2.35:1 |
 
-🔴 **`--fg-subtle` passes on paper and fails on tint.** 4.71:1 clears the
+**`--fg-subtle` passes on paper and fails on tint.** 4.71:1 clears the
 4.5:1 floor on the page and 4.37:1 does not clear it on a plate. This is the
 single most useful thing measuring both grounds taught me, and it is invisible
 if you only ever test the page.

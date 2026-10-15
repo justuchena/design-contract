@@ -1,19 +1,11 @@
-#!/usr/bin/env node
 /**
  * Tests the checker against the fixture.
  *
  *     node enforce/test.mjs
  *
- * ── Why this exists ──────────────────────────────────────────────────────
- * This repo's whole argument is that a rule nobody runs is a rule nobody
- * keeps. A checker with no test is exactly that: the rules would keep
- * passing long after they stopped firing, and a rule that silently stops
- * firing is worse than no rule, because you believe you are covered.
- *
- * The negative cases matter more than the positive ones. Any regex catches
- * a violation. The hard part is *not* reporting the comment that explains
- * the ban, the `aria-hidden` glyph that is legitimately decorative, and the
- * `accept="image/*"` attribute that once ate half a file.
+ * The negative cases are the ones that matter: any regex catches a
+ * violation, and the hard part is leaving a deliberate pattern alone. Each
+ * one here is a bug this checker has actually had.
  */
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
@@ -112,7 +104,7 @@ check(
   countFor("tokens") === 1,
   "only the cross-sheet duplicate should fire",
 );
-/* ⚠️ **The two assertions below are the only ones allowed to name a line,
+/* **The two assertions below are the only ones allowed to name a line,
    and both earn it.** One is *about* line numbers; the other is about a
    specific comment. Both live in `violations.tsx`, which is frozen for this
    reason — every line-number assertion written against `interaction.tsx`

@@ -2,39 +2,11 @@
 /**
  * The rules in your design doc that a machine can hold, held.
  *
- *     node enforce/design-check.mjs
- *     node enforce/design-check.mjs --config path/to/design-check.config.mjs
+ *     node enforce/design-check.mjs [--config <path>] [--max <n>]
  *
- * ── Why this exists ──────────────────────────────────────────────────────
- * A design system written down is a claim. A design system that runs is a
- * contract. Nothing in a normal toolchain closes that gap: `tsc` cannot see
- * a class name, eslint has no opinion about a border radius, and a test
- * suite is perfectly green on a button with no focus ring.
- *
- * So every rule drifts. Not through carelessness — through the ordinary
- * accumulation of a hundred small decisions made by people who did not read
- * 2,000 lines of prose first. On one audit of my own app I found a grey
- * failing contrast in sixteen places, five card radii where one was meant,
- * a colour the doc explicitly retired still sitting in the stylesheet, and
- * em dashes in copy the same document banned them from. Each had been
- * written down. Each drifted anyway, because a rule nobody runs is a rule
- * nobody keeps.
- *
- * ── What this deliberately does NOT check ────────────────────────────────
- * Composition. Whether a section earns its place, whether the tonal arc
- * reads, whether a headline is any good. Those are the parts of a design
- * doc worth a person's judgement, and a check that pretended to have an
- * opinion about them would produce noise — and noise teaches people to pass
- * `--force`, which costs you every rule at once.
- *
- * ── The shape of a rule ──────────────────────────────────────────────────
- * Every rule carries a `why`, and the report prints it. A check with no
- * argument behind it gets deleted the first time it is inconvenient, and
- * that is the correct outcome for a check with no argument behind it.
- *
- * Every rule reads source *with comments stripped*. A rule that fires on
- * the prose explaining why something is banned is a rule that punishes
- * writing the explanation down.
+ * Composition is deliberately not checked, and every rule carries the sentence
+ * that justifies it. The argument for both, and for each rule, is in
+ * enforce/README.md.
  */
 import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { join, relative, resolve, dirname } from "node:path";
@@ -77,23 +49,12 @@ const listFiles = (dir, out = []) => {
 };
 
 /**
- * Blank out comments, preserving offsets, skipping over string literals.
+ * Blank out comments, preserving offsets, skipping string literals.
  *
- * Three hard-won properties, each of which I got wrong first:
- *
- * 1. **Offsets are preserved, never removed.** Line numbers are counted by
- *    newlines, so a comment is blanked in place. Deleting it shifts every
- *    index after it and reports the wrong line, which is worse than no line
- *    at all because somebody goes and looks.
- *
- * 2. **It has to know what a string is.** A regex for `/*` cannot tell a
- *    comment from `accept="image/*"` — and on one file that attribute opened
- *    a comment that ran hundreds of lines to the next `*​/`, blanking
- *    everything between. Every rule then read a file that does not exist and
- *    reported true statements about it.
- *
- * 3. **Strings are skipped, not blanked.** Class names, aria labels and
- *    `accept` values all live in strings, and every rule needs them.
+ * Both properties are load-bearing. Offsets are preserved because line numbers
+ * are counted by newlines, so deleting a comment reports the wrong line. And a
+ * regex for the comment opener cannot tell one from `accept="image/*"`, which
+ * once opened a comment that ran hundreds of lines and blanked the file.
  */
 const strip = (src) => {
   const out = src.split("");
@@ -143,23 +104,9 @@ if (!files.length) {
   process.exit(2);
 }
 
-/**
- * The rules this engine has, and what in a config turns each one on.
- *
- * It exists so the count is *derived*. A hand-maintained list of what the
- * checker holds rots the same way a hand-maintained design rule does, and I
- * would rather not demonstrate the problem this repo is named after inside
- * the file that is supposed to solve it. The report reads this; so does the
- * test, which asserts the number the README prints.
- *
- * `limits` is the half a finding cannot tell you. Every rule prints the
- * sentence that justifies it, which is the whole argument here — but on one
- * real audit three rules reported a decision rather than drift, and nothing
- * in the output hinted that they could not tell the difference. A reader
- * then either edits correct code or stops trusting the run. So a rule that
- * has a blind spot now states it, under its own findings, and a config can
- * add or replace the sentence for a rule it names itself.
- */
+/* The rules this engine has, and what in a config turns each one on. The
+   count is derived from this so no prose has to be kept in step with it;
+   `limits` is the blind spot a finding cannot tell you, printed under it. */
 const RULES = [
   { name: "palette", on: (c) => c.retiredHues?.length || c.retiredHex?.length || c.banArbitraryColor,
     limits: "it reads names and literals, so a colour arriving through a variable or a computed class is invisible to it." },
@@ -295,40 +242,18 @@ const classNameOf = (tag) => {
   return m ? m[2] : null;
 };
 
-/**
- * Every class expression in a file, as whole expressions.
- *
- * Several rules below are about a *contradiction inside one expression* —
- * `opacity-0` with a hover answer and no focus answer, an ink token carrying
- * text, an outline removed with nothing put back. A line-wise check gets all
- * three wrong the moment somebody formats an array of classes across five
- * lines, which is the normal way to write a long one. It then reports a file
- * that is correct, and the fix a reader applies makes it worse.
- *
- * The four alternatives are a plain string, a template literal, an
- * `[...].join()` array, and a braced expression with one level of nesting
- * (which covers `clsx(...)` and a ternary). `class=` as well as `className=`,
- * so the rules are not React-only.
- */
+/* Every class expression, whole. Several rules look for a contradiction
+   *inside* one — `opacity-0` with a hover answer and no focus answer — and a
+   line-wise check misreads any class list formatted across several lines,
+   which is the normal way to write a long one. */
 const CLASS_EXPR =
   /class(?:Name)?=(?:"[^"]*"|'[^']*'|\{`[^`]*`\}|\{\[[\s\S]*?\]\.join\([^)]*\)\}|\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\})/g;
 const classExpressions = (text) => [...text.matchAll(CLASS_EXPR)];
 
-/**
- * The open tags still unclosed at `index` — a node's JSX ancestors.
- *
- * This exists for the field rule, and the first version of that rule
- * without it reported thirteen correctly labelled fields as nameless. Their
- * label is a local `<Row label="Name">` whose *body* is a `<label>` wrapping
- * the children: the association is real, it is implicit, and it crosses a
- * component boundary no regex over one file can follow.
- *
- * So the test a rule should apply to the result is the *prop*, not the
- * element — an ancestor that is a `<label>`, or that takes a `label=` or
- * `aria-label=` prop, is naming what it wraps. A wrapper that accepts a
- * `label` and fails to render one is a bug in the wrapper, and belongs to
- * the wrapper's own tests rather than to this checker.
- */
+/* The open tags still unclosed at `index`. The test a caller should apply is
+   the *prop*, not the element: an ancestor that is a `<label>`, or that takes
+   a `label=`, is naming what it wraps. Without that, a field labelled by a
+   wrapper component reads as nameless. */
 const ancestorsOf = (text, index) => {
   const stack = [];
   const re = /<(\/?)([A-Za-z][\w.]*)\b/g;
@@ -559,22 +484,10 @@ if (config.tokensDeclaredOnce) {
   }
 }
 
-// ── rule: the focus indicator ───────────────────────────────────────────
-// A bare `focus:outline-none` removes the indicator and puts nothing back,
-// which is the most common accessibility failure in generated UI: the
-// suppression is one word, the replacement is a decision, and a model that
-// has been asked for a clean-looking button writes the first and skips the
-// second.
-//
-// Two things make this rule survive a real codebase, and I got both wrong
-// first. `focus-visible:` has to be in the pattern — I checked
-// `focus:outline-none` alone, so `focus-visible:outline-none`, which removes
-// the ring on precisely the interaction it exists for, sailed through for
-// weeks. And the word is *bare*: suppressing the outline and substituting a
-// background or a ring is a legitimate pattern, three files did it
-// deliberately, and reporting them would have been reporting a decision. So
-// the rule reads the whole class expression and asks whether anything else
-// answers focus.
+// A bare `focus:outline-none` removes the indicator and puts nothing back.
+// Two things keep this usable: `focus-visible:` has to be in the pattern, and
+// a substitute that answers focus is a decision rather than a leftover, so the
+// whole class expression is read rather than the line.
 if (config.focusIndicator) {
   const {
     substitutePattern = "focus(?:-visible)?:(?!outline-none)(?:bg-|text-|ring-|border-|outline-\\d|shadow-)",
@@ -659,16 +572,9 @@ if (config.radius) {
   }
 }
 
-// ── rule: the pointer target ────────────────────────────────────────────
-// WCAG 2.2 §2.5.8 asks for 24 by 24 CSS pixels of any pointer target, and an
-// icon-only control is where that gets lost: the glyph is 16px, the padding
-// is `p-1`, the result is 24 if you are lucky and 20 if the padding came
-// from a different component. The same control usually has no text for
-// assistive technology to read either, so both halves are checked here.
-//
-// Note what the size is computed *from*. An explicit height is trusted and
-// the rule stands down — if somebody wrote `min-h-11` they have thought
-// about it. Only a control whose box is implied by padding is measured.
+// WCAG 2.2 §2.5.8 asks 24px of any pointer target, and an icon-only control
+// usually has no accessible name either. An explicit height stands the rule
+// down: somebody who wrote a height has thought about the box.
 if (config.hitTarget) {
   const {
     element = "button",
@@ -713,17 +619,9 @@ if (config.hitTarget) {
   }
 }
 
-// ── rule: an affordance that appears on hover ───────────────────────────
-// A reveal that answers hover and not focus is invisible to a keyboard: you
-// tab to it and the focus ring is sitting on a control at `opacity: 0`. The
-// row's delete, its star, the `...` that only appears when the pointer is
-// near — all of them, and it is one of the few accessibility faults that is
-// also a *bug for everyone*, because the control is reachable and cannot be
-// seen.
-//
-// `pointer-events-none` is exempt and has to be. A caption fading over a
-// cover image can never take focus because it can never be reached, and it
-// is decoration rather than an affordance.
+// A reveal that answers hover and not focus leaves a keyboard on a control at
+// `opacity: 0`. `pointer-events-none` is exempt: something unreachable is
+// decoration rather than an affordance.
 if (config.hoverReveal) {
   const {
     hiddenPattern = "\\bopacity-0\\b",
@@ -749,19 +647,9 @@ if (config.hoverReveal) {
   }
 }
 
-// ── rule: motion nobody can switch off ──────────────────────────────────
-// Reduced-motion rules are almost always written one class name at a time —
-// a stylesheet turns off the four animations it knows about by name, and
-// there is no blanket `* { animation: none }` anywhere. So a hand-rolled
-// utility pulse keeps animating for somebody who asked their operating
-// system for none of it, and nothing in the toolchain says so.
-//
-// The guard this rule accepts is the stronger form of what it asks for:
-// `motion-safe:` compiles to `prefers-reduced-motion: no-preference`, so the
-// animation never starts rather than being switched off afterwards. Missing
-// that was how an earlier version of this rule reported a guarded element on
-// every single run, which is how a checker teaches people to skim its
-// output — and skimming is one step from `--force`.
+// Reduced-motion rules are written one class name at a time, so a hand-rolled
+// utility animation is covered by none of them. `motion-safe:` is accepted as
+// the stronger guard: it never starts, rather than being switched off after.
 for (const rule of config.motionGuards ?? []) {
   const re = new RegExp(`\\b${rule.class}\\b`, "g");
   for (const f of files) {
@@ -778,19 +666,9 @@ for (const rule of config.motionGuards ?? []) {
   }
 }
 
-// ── rule: fields ────────────────────────────────────────────────────────
-// For a long time the checker this one is derived from inspected exactly one
-// element: `<button>`. Every rule walked the buttons, so `<input>`,
-// `<select>` and `<textarea>` — 171 of them across 77 files — were outside
-// the contract entirely. Radius, the boundary, focus and the accessible name
-// were unchecked on every form control the product had, while the report
-// said the system was green. A check that covers the controls people press
-// and not the ones they type into is not a design system.
-//
-// These are field rules, not use-the-house-component rules. A raw `<input>`
-// is legitimate: a visually hidden file picker, a search box whose wrapper
-// carries the focus. A check that demanded the wrapper everywhere would be
-// arguing about identity rather than about what somebody sees.
+// The controls people type into, which stayed outside the contract for a long
+// time because every rule walked `<button>`. These are field rules, not
+// use-the-house-component rules: a raw <input> is legitimate.
 if (config.fields) {
   const {
     elements = "input|select|textarea",
@@ -876,16 +754,9 @@ if (config.fields) {
   }
 }
 
-// ── rule: a raw image ───────────────────────────────────────────────────
-// An expired signed URL or a deleted object renders the browser's
-// broken-image glyph: a different shape and colour in every browser, and one
-// that reads as *the product* being broken rather than as a picture being
-// missing. Not one image in the app this came from had a fallback. A wrapper
-// draws a neutral tile instead and carries the `loading` and `decoding`
-// attributes in one place.
-//
-// The allow-list is by file and every entry states its reason, because a
-// blanket rule nobody can satisfy earns a disable comment in its first week.
+// A raw <img> renders the browser's broken glyph on a dead URL. The allowlist
+// is by file and each entry states its reason: a rule with no sanctioned home
+// for what it bans earns a disable comment in its first week.
 if (config.imageComponent) {
   const { component, element = "img", allow = [], why } = config.imageComponent;
   const allowed = allow.map((a) => new RegExp(typeof a === "string" ? a : a.path));
@@ -901,19 +772,9 @@ if (config.imageComponent) {
   }
 }
 
-// ── rule: a hand-rolled shell ───────────────────────────────────────────
-// The single most common form of local plausibility and global incoherence.
-// A design doc says an object holding content takes one class, which carries
-// radius, hairline and ambient ramp together. What is live instead is
-// `rounded-xl border border-line bg-surface-1` in two dozen files: a flat
-// outlined rectangle, which is the treatment the same document reserves for
-// a *region* rather than an object. A page of them reads as a wireframe,
-// which is the complaint the whole substrate chapter was written to answer.
-//
-// Each exemption here is a shape, not a file. A border carrying *state* is
-// the important one: a hairline drawn as an inset ring inside a box-shadow
-// cannot be toggled by a variant, so a card that lights its whole border as
-// a drop target would lose the affordance if it converted.
+// A flat outlined rectangle where the doc specifies a component. The exempt
+// shapes matter: a border carrying state cannot convert, because a hairline
+// drawn as an inset ring inside a box-shadow has no variant to toggle.
 for (const rule of config.shells ?? []) {
   const hit = new RegExp(rule.pattern);
   const requires = (rule.requires ?? []).map((p) => new RegExp(p));
@@ -931,20 +792,9 @@ for (const rule of config.shells ?? []) {
   }
 }
 
-// ── rule: a flex child that will not shrink ─────────────────────────────
-// `flex-1 overflow-y-auto` without `min-h-0` is a pane that grows past its
-// container. A flex item defaults to `min-height: auto` and refuses to
-// shrink below its content, so `flex-1` becomes a *floor* rather than a
-// share: the scroller runs off the bottom of the frame holding it and —
-// worse — its own height stops being definite, so a child asking for
-// `h-full` resolves against an indefinite parent and grows a *second*
-// scroll container inside the first.
-//
-// That is the two-scrollbar fault, it cost a day, and it is in this repo
-// because it is the most common real layout bug in Tailwind rather than
-// because it is a matter of taste. Four sites had it in one app and the
-// fifth escaped only because its grid carried intrinsic heights that
-// happened to fit.
+// `flex-1 overflow-y-auto` without `min-h-0`: a flex item defaults to
+// min-content and will not shrink, so the pane grows past its frame and an
+// `h-full` child resolves against it and grows a second scrollbar.
 if (config.flexShrink) {
   const axes = config.flexShrink.axes ?? ["y"];
   const AXIS = {
@@ -967,17 +817,9 @@ if (config.flexShrink) {
   }
 }
 
-// ── rule: a type token used as a fill ───────────────────────────────────
-// The failure this catches is invisible in one theme and unreadable in the
-// other, which is the worst shape a colour bug has. A token meant for
-// *type, border and ring* is the same hue as its fill counterpart on light
-// and diverges on dark, where it lightens precisely so it stays legible as
-// text. Put it behind a label and you have white on a pale blue at about
-// 1.9:1 — in exactly one theme, so every screenshot anybody took looked
-// fine.
-//
-// Only when something is written on it. A bare fill with no text is a mark
-// rather than a ground, and the type ramp is the right family for a mark.
+// A token meant for type, border and ring used as a ground under text. The
+// two are the same hue on light and diverge on dark, so it is unreadable in
+// exactly one theme and every screenshot looks fine.
 for (const rule of config.inkAsFill ?? []) {
   const fill = new RegExp(rule.fillPattern);
   const onIt = new RegExp(rule.textPattern);

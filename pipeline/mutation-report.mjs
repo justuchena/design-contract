@@ -1,29 +1,12 @@
-#!/usr/bin/env node
 /**
- * Stryker's JSON report → which rules the surviving mutants cluster in.
+ * Stryker's JSON report, bucketed by which rule each surviving mutant falls
+ * inside, worst-covered first.
  *
- *     npm run mutate            # writes .cache/mutation/report.json
- *     node pipeline/mutation-report.mjs
+ *     node pipeline/mutation-report.mjs [report.json] [--min=N]
  *
- * ── Why this exists rather than reading Stryker's own output ──────────────
- * Because the number is the least useful part, and the clear-text report is
- * a thousand lines of diffs ordered by file position, which is the one
- * ordering that answers nothing. What you want to know is *which rule* has
- * tests that only look like tests, and the file already says where each rule
- * starts: every rule in `design-check.mjs` opens with a `// ── rule: …`
- * header. So mutants are bucketed by the rule they fall inside, and the
- * worst-covered rule is printed first.
- *
- * That is the whole tool, and it changed the conclusion twice. A flat 48.95%
- * said "the suite is weak". Bucketed, the same run said: the radius tier
- * branch is dead, no test runs a sparse config, and the focus rule's
- * class-constant half has never executed. Three specific defects, each a few
- * lines of fixture, rather than one discouraging percentage.
- *
- * ⚠️ **Ignored mutants are excluded from both halves of the ratio.** A
- * mutant the config deliberately excludes is not a gap in the tests, and
- * counting it as a kill flatters every rule it sits in. I had this wrong in
- * the first pass and it inflated the per-rule table by about ten points.
+ * Stryker's own output is ordered by file position, which answers nothing.
+ * The rule headers already in design-check.mjs are the section map, so there
+ * is nothing here to keep in step with the engine.
  */
 import { readFileSync, existsSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
@@ -43,8 +26,6 @@ const report = JSON.parse(readFileSync(REPORT, "utf8"));
 
 for (const [path, file] of Object.entries(report.files ?? {})) {
   const lines = file.source.split("\n");
-  /* The file's own rule headers are the section map. Nothing to maintain
-     here: add a rule with a header and it shows up in this table. */
   const headers = [];
   lines.forEach((line, i) => {
     const m = line.match(/^\s*\/\/ ── (.+?) ─+/);

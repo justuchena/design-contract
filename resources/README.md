@@ -29,7 +29,7 @@ cannot say why.
 | [Heroicons](https://heroicons.com) | MIT | Outline and solid at 24/20/16. Pairs with Tailwind defaults. |
 | [Tabler Icons](https://tabler.io/icons) | MIT | ~5,800 icons. Reach for it when a niche glyph is genuinely missing elsewhere. |
 | [Material Symbols](https://fonts.google.com/icons) | Apache-2.0 | Variable axes for weight, fill and optical size. |
-| [Simple Icons](https://simpleicons.org) | CC0-1.0 | Brand marks only. ⚠️ CC0 covers the *file*, not the trademark — a brand's own guidelines still govern its mark. |
+| [Simple Icons](https://simpleicons.org) | CC0-1.0 | Brand marks only. CC0 covers the *file*, not the trademark — a brand's own guidelines still govern its mark. |
 
 **Set your stroke width and sizes once and check them.** The `iconScale` rule
 in [`../enforce/`](../enforce/) exists because one real project had twelve
@@ -40,7 +40,7 @@ icon sizes and nine stroke widths in use, none of them chosen.
 | Source | Licence | Notes |
 |---|---|---|
 | [Fontsource](https://fontsource.org) | per-font (mostly OFL) | Self-hosting as npm packages, with subsetting. How I install fonts. |
-| [Google Fonts](https://fonts.google.com) | mostly OFL | ⚠️ Serving from `fonts.googleapis.com` is a third-party request; self-host for privacy and for the render-blocking cost. |
+| [Google Fonts](https://fonts.google.com) | mostly OFL | Serving from `fonts.googleapis.com` is a third-party request; self-host for privacy and for the render-blocking cost. |
 | [Inter](https://rsms.me/inter/) | SIL OFL 1.1 | Vendored here. The safe default for UI at small sizes. |
 | [Outfit](https://github.com/Outfitio/Outfit-Fonts) | SIL OFL 1.1 | Vendored here. Geometric, for display weights. |
 | [Instrument Sans / Serif](https://github.com/Instrument/instrument-sans) | SIL OFL 1.1 | A distinctive pairing that has not yet been used everywhere. |
@@ -48,7 +48,7 @@ icon sizes and nine stroke widths in use, none of them chosen.
 | [Geist](https://vercel.com/font) | SIL OFL 1.1 | Sans and mono. |
 | [The League of Moveable Type](https://www.theleagueofmoveabletype.com) | SIL OFL 1.1 | Display faces with character, free to embed. |
 
-🔴 **Never ship a commercial face you have not licensed for web embedding.** A
+**Never ship a commercial face you have not licensed for web embedding.** A
 desktop licence is not a web licence, and the foundries do check. If a
 reference argues for a face you cannot afford, the design doc's answer should
 already be no.
@@ -67,7 +67,7 @@ When you do want a set, pick one and commit:
 |---|---|---|
 | [Humaaans](https://www.humaaans.com) | CC BY 4.0 | Mix-and-match figures, recolourable. Attribution required. |
 | [Open Peeps](https://www.openpeeps.com) | CC0-1.0 | Hand-drawn figures. No attribution needed. |
-| [unDraw](https://undraw.co) | own licence, permissive | ⚠️ The most recognisable set on the internet. Using it unmodified reads as a template. |
+| [unDraw](https://undraw.co) | own licence, permissive | The most recognisable set on the internet. Using it unmodified reads as a template. |
 | [Reshot Illustrations](https://www.reshot.com/free-vector-icons/) | own free licence | Read the terms; they differ per asset. |
 | [Blush](https://blush.design) | mixed, some paid | Collections by individual illustrators. Licence varies per collection. |
 | [Lukasz Adam](https://lukaszadam.com/illustrations) | CC0 / MIT | Small, less-used sets. |
@@ -76,10 +76,10 @@ When you do want a set, pick one and commit:
 
 | Source | Licence | Notes |
 |---|---|---|
-| [Unsplash](https://unsplash.com) | Unsplash licence | Free to use, cannot be resold as stock. ⚠️ No model release — do not imply a person endorses anything. |
+| [Unsplash](https://unsplash.com) | Unsplash licence | Free to use, cannot be resold as stock. No model release — do not imply a person endorses anything. |
 | [Pexels](https://www.pexels.com) | Pexels licence | Same caution. |
 
-⚠️ **Stock photography of people is a small lie in most product UI.** If the
+**Stock photography of people is a small lie in most product UI.** If the
 screen is about a user's own team, a photograph of a different team is read as
 exactly what it is.
 

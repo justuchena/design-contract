@@ -142,5 +142,5 @@ writeFileSync(out, json);
 const summary = Object.entries(counts).map(([g, n]) => `${g} ${n}`).join(", ");
 console.log(`✓ ${out} — ${total} tokens (${summary})`);
 if (counts.other) {
-  console.log(`\n⚠️  ${counts.other} token(s) landed in "other". Add a group, or rename them.`);
+  console.log(`\n${counts.other} token(s) landed in "other". Add a group, or rename them.`);
 }

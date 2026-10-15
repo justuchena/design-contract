@@ -118,7 +118,7 @@ await browser.close();
 
 console.log(`\n${shots} screenshot(s) in ${OUT}/`);
 if (errors.length) {
-  console.log(`\n⚠️  ${errors.length} page error(s) — a blank page screenshots fine:\n`);
+  console.log(`\n${errors.length} page error(s) — a blank page screenshots fine:\n`);
   for (const e of [...new Set(errors)].slice(0, 10)) console.log(`  ${e}`);
   process.exit(1);
 }

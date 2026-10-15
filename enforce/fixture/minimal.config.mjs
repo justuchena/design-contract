@@ -1,7 +1,7 @@
 /**
  * One rule on, eighteen off.
  *
- * 🔴 **Nothing used to exercise this shape, and mutation testing is how it
+ * **Nothing used to exercise this shape, and mutation testing is how it
  * surfaced:** every `OptionalChaining` and `UnaryOperator` mutant in the
  * engine survived, 20 of them, at a flat 0%. That is the signature of a
  * branch no test reaches — and the branch in question is every

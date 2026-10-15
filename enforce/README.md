@@ -250,7 +250,7 @@ exemptions: [
 
 Name the rules it covers. Avoid `rules: "*"` unless you mean it.
 
-🔴 **Re-read this list whenever a file moves.** On a real project an
+**Re-read this list whenever a file moves.** On a real project an
 exemption outlived the thing it exempted and kept pointing at the file the
 colours *used to* live in — so the sanctioned module was being checked and
 the unsanctioned one was not. That is the exemption pointing at exactly the

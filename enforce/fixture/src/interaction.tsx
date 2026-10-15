@@ -18,6 +18,9 @@
    was *documented and never once executed*. That is not a gap in the tests,
    it is a feature claim with nothing behind it. */
 const DEAD_FOCUS = 'rounded px-2 focus-visible:outline-none text-slate-700';
+// The same thing as a template literal, which is a separate branch of the
+// pattern and was the other half of the surviving cluster.
+const DEAD_FOCUS_TEMPLATE = `rounded px-2 focus:outline-none text-slate-700`;
 
 export const Interaction = () => (
   <div>
@@ -26,6 +29,7 @@ export const Interaction = () => (
     <button className="focus:outline-none">Bare</button>
     <button className="focus-visible:outline-none focus-visible:bg-slate-100">Deliberate</button>
     <button className={DEAD_FOCUS}>Suppressed in a constant</button>
+    <button className={DEAD_FOCUS_TEMPLATE}>Suppressed in a template literal</button>
 
     {/* radius: an arbitrary value, then one carried by a named variable,
         which is a role chosen elsewhere rather than a sixth number. */}
@@ -92,9 +96,21 @@ export const Interaction = () => (
 
     {/* fields: invisible controls have no geometry to get wrong and nothing
         to announce. `hidden` is display:none, and the file input behind a
-        styled drop zone is reached only by the click that opens it. */}
+        styled drop zone is reached only by the click that opens it. The
+        submit and button types are the other two the rule skips, and each
+        was its own surviving mutant until it had a case. */}
     <input type="hidden" value="x" />
     <input type="file" className="hidden" accept="image/*" />
+    <input type="submit" value="Save" />
+    <input type="button" value="Cancel" />
+
+    {/* fields: named by aria-labelledby rather than an id or a wrapper, and
+        a field whose border is a single edge rather than a box. WCAG 2.2
+        §1.4.11 asks 3:1 of the boundary needed to find a control, and one
+        edge under a full-bleed input inside something that already frames
+        it is not that. So the radius rule must stand down here. */}
+    <input aria-labelledby="query-label" className="rounded-lg border border-slate-300" />
+    <input id="edge" className="rounded-md border-b border-slate-300" />
 
     {/* media: a raw img. The allowed one is in kit/, which owns the
         primitive, and the allow list names it with its reason. */}

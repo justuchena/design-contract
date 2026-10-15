@@ -47,7 +47,7 @@ console.log("\nexit code");
 check("non-zero when findings exist", status === 1, `got ${status}`);
 
 console.log("\ntotals");
-check("30 findings in 5 files", total === 30, `got ${total}`);
+check("31 findings in 5 files", total === 31, `got ${total}`);
 
 console.log("\nrules fire");
 const expected = {
@@ -63,7 +63,7 @@ const expected = {
   copy: 1,
   tokens: 1,
   /* The interaction rules. */
-  focus: 2, // one on an attribute, one in a class constant
+  focus: 3, // an attribute, a string constant and a template literal
   radius: 3, // an arbitrary value, and both tiers
   a11y: 2, // the 22px target, and the nameless icon-only button
   reveal: 1,
@@ -123,7 +123,7 @@ check(
 console.log("\nnegative cases (the interaction rules)");
 check(
   "an outline suppressed WITH a substitute is a decision, not a leftover",
-  countFor("focus") === 2,
+  countFor("focus") === 3,
   "focus-visible:outline-none beside focus-visible:bg-* must not fire",
 );
 check(
@@ -227,6 +227,22 @@ check(
   /focus-visible:outline-none with nothing put back/.test(out) &&
     /focus:outline-none with nothing put back/.test(out),
   "22 mutants in CONST_EXPR survived at once: the branch was documented and never executed",
+);
+check(
+  "a submit or button input has nothing to announce and no box to get wrong",
+  countFor("field") === 3 && !/value="(?:Save|Cancel)"/.test(out),
+  "hidden, file, submit and button are the four the field rule skips",
+);
+check(
+  "aria-labelledby names a field, as much as an id or a wrapper does",
+  !out.includes("query-label"),
+  "the third of the three ways a field can be named",
+);
+check(
+  "a single border edge is not the boundary that identifies a control",
+  !out.includes("rounded-md on a field — the field radius") ||
+    (out.match(/rounded-md on a field/g) ?? []).length === 1,
+  "border-b under a full-bleed input is a divider; WCAG 2.2 §1.4.11 wants a box",
 );
 check(
   "the radius tier rule is actually triggered, not merely configured",

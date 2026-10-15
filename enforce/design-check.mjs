@@ -484,6 +484,7 @@ if (config.tokensDeclaredOnce) {
   }
 }
 
+// ── rule: the focus indicator ───────────────────────────────────────────
 // A bare `focus:outline-none` removes the indicator and puts nothing back.
 // Two things keep this usable: `focus-visible:` has to be in the pattern, and
 // a substitute that answers focus is a decision rather than a leftover, so the
@@ -572,6 +573,7 @@ if (config.radius) {
   }
 }
 
+// ── rule: the pointer target ────────────────────────────────────────────
 // WCAG 2.2 §2.5.8 asks 24px of any pointer target, and an icon-only control
 // usually has no accessible name either. An explicit height stands the rule
 // down: somebody who wrote a height has thought about the box.
@@ -619,6 +621,7 @@ if (config.hitTarget) {
   }
 }
 
+// ── rule: an affordance that appears on hover ───────────────────────────
 // A reveal that answers hover and not focus leaves a keyboard on a control at
 // `opacity: 0`. `pointer-events-none` is exempt: something unreachable is
 // decoration rather than an affordance.
@@ -647,6 +650,7 @@ if (config.hoverReveal) {
   }
 }
 
+// ── rule: motion nobody can switch off ──────────────────────────────────
 // Reduced-motion rules are written one class name at a time, so a hand-rolled
 // utility animation is covered by none of them. `motion-safe:` is accepted as
 // the stronger guard: it never starts, rather than being switched off after.
@@ -666,6 +670,7 @@ for (const rule of config.motionGuards ?? []) {
   }
 }
 
+// ── rule: fields ────────────────────────────────────────────────────────
 // The controls people type into, which stayed outside the contract for a long
 // time because every rule walked `<button>`. These are field rules, not
 // use-the-house-component rules: a raw <input> is legitimate.
@@ -754,6 +759,7 @@ if (config.fields) {
   }
 }
 
+// ── rule: a raw image ───────────────────────────────────────────────────
 // A raw <img> renders the browser's broken glyph on a dead URL. The allowlist
 // is by file and each entry states its reason: a rule with no sanctioned home
 // for what it bans earns a disable comment in its first week.
@@ -772,6 +778,7 @@ if (config.imageComponent) {
   }
 }
 
+// ── rule: a hand-rolled shell ───────────────────────────────────────────
 // A flat outlined rectangle where the doc specifies a component. The exempt
 // shapes matter: a border carrying state cannot convert, because a hairline
 // drawn as an inset ring inside a box-shadow has no variant to toggle.
@@ -792,6 +799,7 @@ for (const rule of config.shells ?? []) {
   }
 }
 
+// ── rule: a flex child that will not shrink ─────────────────────────────
 // `flex-1 overflow-y-auto` without `min-h-0`: a flex item defaults to
 // min-content and will not shrink, so the pane grows past its frame and an
 // `h-full` child resolves against it and grows a second scrollbar.
@@ -817,6 +825,7 @@ if (config.flexShrink) {
   }
 }
 
+// ── rule: a type token used as a fill ───────────────────────────────────
 // A token meant for type, border and ring used as a ground under text. The
 // two are the same hue on light and diverge on dark, so it is unreadable in
 // exactly one theme and every screenshot looks fine.

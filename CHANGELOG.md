@@ -1,5 +1,34 @@
 # Changelog
 
+## 0.3.1 — 2026-10-15
+
+Comment style, and a guard on the structure the mutation report reads.
+
+- **The block comments were essays, and they are not any more.** The engine
+  was 38% comment with a 37-line header; `stryker.conf.mjs` was 85% prose
+  standing over thirteen lines of configuration. The reasoning was not wrong,
+  it was in the wrong file: `enforce/README.md` and `method/` already carry
+  the argument for every rule, so there were two copies drifting apart. A
+  comment earns its place where the next reader would otherwise change
+  something and break it. Engine 1,044 lines to 886, 38% to 27%, no code
+  changed.
+- **The severity markers are gone**, all eighteen. They are a real convention
+  in another repo of mine, applied consistently; sprinkled across nine files
+  here they encoded nothing, which is decoration — and this repo rejects
+  decoration on the grounds that a reader identifies it as generated. The
+  `✓` and `✗` in report output stay, being output rather than commentary.
+- **Nine rule dividers were lost in that cut, and nothing caught it.**
+  `pipeline/mutation-report.mjs` buckets mutants by the engine's own
+  `// ── rule: …` dividers, which is what makes it maintenance-free and also
+  a dependency on structure nothing checked. The report kept printing a
+  plausible table that attributed 328 mutants to one rule. `enforce/test.mjs`
+  now asserts the divider count and that they are padded alike.
+- **Second mutation pass**: the focus rule's template-literal branch, and four
+  field skip-branches (`type="submit"`, `type="button"`, `aria-labelledby`,
+  and a `border-b` edge where the radius rule must stand down). 63.15% to
+  **63.66%**, focus to 49%, fields to 60%. The pass gained five mutants,
+  which is the stopping point: what survives is mostly equivalent mutants.
+
 ## 0.3.0 — 2026-10-15
 
 Mutation testing, because a test that cannot fail is a test nobody keeps.

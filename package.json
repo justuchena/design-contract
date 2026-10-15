@@ -1,6 +1,6 @@
 {
   "name": "@justuchena/no-ai-slop",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "A design-doc method, the state rules that decide whether an interface tells the truth, 152 design-system references, and a checker that enforces the rules a machine can hold.",
   "keywords": [
     "design-system",

@@ -307,6 +307,12 @@ doc.
 ### As a Claude Code plugin
 
 ```
+/plugin install design-contract --marketplace justuchena/design-contract
+```
+
+On Claude Code older than 2.1.275, in two steps:
+
+```
 /plugin marketplace add justuchena/design-contract
 /plugin install design-contract
 ```

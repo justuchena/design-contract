@@ -61,7 +61,8 @@ projects should do but which has legitimate exceptions — it belongs in
 ## Running the checks
 
 ```bash
-node enforce/test.mjs                                        # 23 assertions
+node enforce/test.mjs                                        # the checker and --fix
+node pipeline/test.mjs                                       # the PNG codec and the visual diff
 node pipeline/derive.mjs examples/meridian/tokens.css --check
 node pipeline/contrast.mjs examples/meridian/palette.json    # exits 1 by design
 ```

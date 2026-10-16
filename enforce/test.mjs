@@ -8,7 +8,8 @@
  * one here is a bug this checker has actually had.
  */
 import { execFileSync } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { readFileSync, cpSync, mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -29,8 +30,12 @@ try {
 }
 
 const failures = [];
+let passed = 0;
 const check = (name, condition, detail = "") => {
-  if (condition) console.log(`  ✓ ${name}`);
+  if (condition) {
+    passed += 1;
+    console.log(`  ✓ ${name}`);
+  }
   else {
     console.log(`  ✗ ${name}${detail ? ` — ${detail}` : ""}`);
     failures.push(name);
@@ -47,11 +52,11 @@ console.log("\nexit code");
 check("non-zero when findings exist", status === 1, `got ${status}`);
 
 console.log("\ntotals");
-check("31 findings in 5 files", total === 31, `got ${total}`);
+check("33 findings in 5 files", total === 33, `got ${total}`);
 
 console.log("\nrules fire");
 const expected = {
-  palette: 3,
+  palette: 4,
   "gradient-text": 1,
   layout: 2, // the side-stripe ban and the flex-shrink fault, one each
   plate: 1,
@@ -64,7 +69,7 @@ const expected = {
   tokens: 1,
   /* The interaction rules. */
   focus: 3, // an attribute, a string constant and a template literal
-  radius: 3, // an arbitrary value, and both tiers
+  radius: 4, // an arbitrary value, a banned class, and both tiers
   a11y: 2, // the 22px target, and the nameless icon-only button
   reveal: 1,
   motion: 1,
@@ -128,8 +133,8 @@ check(
 );
 check(
   "a radius carried by a named variable is a role chosen elsewhere",
-  countFor("radius") === 3 && !out.includes("--site-radius"),
-  "rounded-[var(--site-radius)] must not fire; the other three radius findings must",
+  countFor("radius") === 4 && !out.includes("--site-radius"),
+  "rounded-[var(--site-radius)] must not fire; the other four radius findings must",
 );
 check(
   "an explicit height stands the pointer-target rule down",
@@ -319,7 +324,7 @@ for (const doc of ["README.md", "SKILL.md"]) {
 }
 
 console.log("\nreport shape");
-check("each rule prints its justification", /── palette \(3\) ──\n\s+A retired hue/.test(out));
+check("each rule prints its justification", /── palette \(4\) ──\n\s+A retired hue/.test(out));
 check(
   "a rule carrying two arguments prints both, each above its own findings",
   /── layout \(2\) ──\n\s+Side-stripe borders[^\n]*\n\s+\S[^\n]*\n\s+A flex child/.test(out),
@@ -327,10 +332,99 @@ check(
 );
 check("the design doc is cited", out.includes("DESIGN.md has the reasoning"));
 
+/* ── --fix ──────────────────────────────────────────────────────────────
+   Run against a copy, because these assertions are about what changed on
+   disk. The negative cases are again the ones that matter: a fixer is easy
+   to make satisfy a rule and easy to make rewrite something nobody asked
+   it to. */
+console.log("\n--fix applies the mechanical findings");
+
+const SANDBOX = mkdtempSync(join(tmpdir(), "design-contract-fix-"));
+cpSync(FIXTURE, SANDBOX, { recursive: true });
+
+const runFix = () => {
+  try {
+    return {
+      out: execFileSync(process.execPath, [join(HERE, "design-check.mjs"), "--fix"], {
+        cwd: SANDBOX, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"],
+      }),
+      status: 0,
+    };
+  } catch (e) {
+    return { out: `${e.stdout ?? ""}${e.stderr ?? ""}`, status: e.status };
+  }
+};
+
+const first = runFix();
+const read = (rel) => readFileSync(join(SANDBOX, rel), "utf8");
+const violations = read("src/violations.tsx");
+const interaction = read("src/interaction.tsx");
+
+check("it reports the number of fixes and the files touched",
+  /✎ design-check --fix: 7 fix\(es\) in 2 file\(s\)/.test(first.out), first.out.split("\n")[1]);
+check("the findings left are counted, not reprinted as resolved",
+  /26 finding\(s\) still need a decision/.test(first.out));
+check("it still exits non-zero while findings remain", first.status === 1, `got ${first.status}`);
+check("it says to look at the result",
+  /screenshot the routes you changed/.test(first.out),
+  "a rewrite that satisfies a rule and moves the page is still wrong, and no rule in here can tell which happened");
+
+console.log("\neach fix lands on the target the config named");
+check("a type literal becomes the ramp class", violations.includes('className="text-xs bg-clip-text'));
+check("a renamed scale keeps its prefix and its shade", violations.includes("bg-accent-500"));
+check("a retired hex becomes the token", violations.includes("text-[var(--accent)]"));
+check("a stroke width becomes the one in the ramp", violations.includes("strokeWidth={1.75}"));
+check("a banned radius becomes the legal one", violations.includes("rounded-2xl text-ink-secondary"));
+/* The shape a real tree needed: `text-slate-600` became `text-ink-secondary`
+   there, and a hue-segment swap would have written `text-ink-secondary-600`. */
+check("a hue retired for a semantic token drops the shade",
+  violations.includes("text-ink-secondary") && !violations.includes("ink-secondary-700"));
+check("the flex scroller gains the class the rule named",
+  /className="flex-1 overflow-y-auto min-h-0">Grows past its frame/.test(interaction));
+
+console.log("\nwhat --fix must not touch");
+/* The load-bearing one. Offsets come from the stripped copy and are spliced
+   into the raw file, so a stripper that moved a byte would rewrite a
+   comment. This fixture comment names a retired hue and uses an em dash
+   precisely so that mistake cannot pass. */
+check("a comment naming a retired hue and holding an em dash is untouched",
+  violations.includes("it names bg-indigo-500") && violations.includes("uses an em dash —"),
+  "offsets come from the stripped copy and are applied to the raw file");
+check("a retired hex with no replacement declared is left alone",
+  read("src/tokens.css").includes("#6c63ff") || violations.includes("#4338ca") ||
+    !/#4f46e5/.test(violations),
+  "a hue the doc has not decided about stays a finding");
+/* Counted on the line, not in the file: the fixture's own comment mentions
+   the class, and a file-wide count quietly asserts the comment too. */
+const correctPane = interaction.split("\n").find((l) => l.includes("Shrinks correctly")) ?? "";
+check("an already-correct pane does not gain a second min-h-0",
+  (correctPane.match(/min-h-0/g) ?? []).length === 1,
+  `got ${(correctPane.match(/min-h-0/g) ?? []).length} on that line`);
+check("an off-ramp icon size is not guessed at", violations.includes("size={22}"),
+  "four candidates, and the right one depends on the type beside it");
+check("the disabled pair is not chosen for you", violations.includes("aria-disabled:opacity-50"),
+  "two allowed values means picking one is a decision");
+/* Decided by evidence, not taste: four em dashes in a real tree were
+   repaired four different ways — a colon, a comma, a middot, and one
+   deletion — so any default would have been wrong three times in four. */
+check("a banned copy pattern is never rewritten", violations.includes("Pricing — simple"),
+  "a ban names a prohibition, not a target");
+
+console.log("\nrunning it again changes nothing");
+const second = runFix();
+check("the second run finds nothing mechanical left",
+  /none of them mechanical/.test(second.out), second.out.split("\n")[1]);
+check("and says so rather than reporting a clean tree", second.status === 1, `got ${second.status}`);
+check("the file is byte-identical after the second run",
+  read("src/violations.tsx") === violations);
+
 console.log("");
 if (failures.length) {
   console.error(`✗ ${failures.length} assertion(s) failed\n`);
   console.error(out);
   process.exit(1);
 }
-console.log("✓ all assertions passed\n");
+/* Counted from what ran, not written down. A hand-maintained total rots
+   exactly the way a hand-maintained design rule does, and this repo should
+   not demonstrate its own problem in its own test output. */
+console.log(`✓ all ${passed} assertion(s) passed\n`);

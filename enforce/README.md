@@ -98,6 +98,92 @@ fine.
 `--config <path>` points at a different config, `--max <n>` changes how many
 findings print per rule (default 12).
 
+## `--fix`, and the line it will not cross
+
+Six of the rules can state the rewrite that settles a finding. `--fix`
+applies those and nothing else.
+
+```
+node enforce/design-check.mjs --fix
+```
+
+```
+✎ design-check --fix: 6 fix(es) in 2 file(s)
+     palette (2)
+     type (1)
+     icon (1)
+     copy (1)
+     layout (1)
+
+  25 finding(s) still need a decision. Re-run to read them.
+  Diff it, and screenshot the routes you changed before trusting any of this.
+```
+
+A finding prints `[--fix]` when a rewrite is waiting for it, so the only way
+to learn what `--fix` would touch is not to run it on a dirty tree.
+
+**The test for whether a fix belongs here is one sentence: the design doc
+already states the target.** The type ramp maps `14` to `text-sm`, so
+replacing `text-[14px]` carries no judgement — the rewrite is the config read
+forwards. One stroke width is configured, so there is nothing to choose. The
+flex rule names `min-h-0` in the finding it prints. A retired hue, a retired
+hex and a banned radius become fixable the moment the config says what
+replaced them, and stay reports until it does.
+
+And the same sentence rules things out. The disabled pair is *two* allowed
+values, so picking one is a decision. An icon size off the ramp has four
+candidates and the right one depends on the type beside it, which is already
+that rule's stated blind spot. A contrast failure has no mechanical answer at
+all. Nothing here invents an accessible name: a fixer that writes a label
+ships a wrong label, and a wrong label is worse than a missing one, because
+the checker then goes quiet about it.
+
+Three properties worth knowing:
+
+**It needs no parser.** A fix is a byte range in the raw source and the text
+to put there, which is available only because `strip()` preserves offsets —
+the property written so line numbers would be right is the one that makes
+rewriting safe without an AST. A comment in the fixture names a retired hue
+and holds an em dash for exactly this reason: comments are blanked before any
+rule runs, so no fix can be aimed into one, and a test asserts it.
+
+**Overlapping fixes are dropped, not merged.** Two rules wanting the same
+bytes means the doc contradicts itself there. Merging would produce text no
+rule asked for, so both findings print instead.
+
+**It exits non-zero while anything is left.** A fixer that writes six files
+and then exits 0 on twenty-five remaining findings has taught a CI lane to
+stop reading. And it prints the findings that *remain* rather than the ones
+it just resolved, for the same reason.
+
+The thing it cannot do is tell you whether the page still looks right. A fix
+that satisfies a rule and moves the layout is still wrong, and no rule in
+here can tell which happened — so that part is wired rather than suggested:
+
+```bash
+node pipeline/fix-gate.mjs --base http://localhost:5173 --routes / /pricing
+```
+
+Shoots the app, applies the fixes, shoots it again, says what moved, writes a
+mask marking the moved pixels, and exits non-zero whenever anything moved.
+Not because the change is wrong — `min-h-0` is *supposed* to change the
+layout — but so nobody reports the work done without looking. The "before"
+shots are taken first, so a missing browser aborts with the tree untouched.
+
+**Two of the fixes above exist in the shape they do because of a real
+tree**, not the fixture. Running this against a pre-cleanup commit of a real
+project found both:
+
+| What the fixture did not show | What the real tree showed |
+|---|---|
+| Em dashes looked mechanically fixable | Four of them were repaired four different ways — a colon, a comma, a middot, and one deletion. Any default would have been wrong three times in four, so copy bans now carry no fix at all. |
+| A retired hue becomes another hue | `text-slate-600` became `text-ink-secondary` — a *semantic* token with no shade, where a segment swap would have written `text-ink-secondary-600`. So `to` also takes a per-class map. |
+
+With those two corrected, `--fix` reproduces the human commit byte for byte
+and leaves everything it should not touch alone. Which is the argument for
+running a new rule against history before trusting it: the fixture only knows
+what you already thought of.
+
 ## Every run says what it did not check
 
 Two lines that are not findings, and both exist because of the same mistake.

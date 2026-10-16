@@ -7,6 +7,13 @@
  * fails a build is how a team learns to pass `--force`.
  *
  * This example is filled in for the worked example in `examples/meridian/`.
+ *
+ * A few rules take an optional target — `to` on a retired hue, a retired hex
+ * or a banned radius, and the `typeRamp` map, which is one already. Naming it
+ * is what makes those findings fixable by
+ * `design-check --fix`, because the rewrite is then the doc's decision read
+ * back rather than the checker's guess. Leave it out and the rule reports,
+ * which is the right outcome whenever the answer is "it depends".
  */
 export default {
   root: ".",
@@ -14,12 +21,35 @@ export default {
   docPath: "DESIGN.md",
   skipDirs: ["node_modules", "dist", "build", "__tests__", ".next"],
 
-  /* Colours the doc retired. The names, for utility classes. */
-  retiredHues: ["indigo", "violet", "purple", "fuchsia"],
+  /* Colours the doc retired. The names, for utility classes.
+
+     A bare name reports. `{ hue, to }` also fixes, in one of two shapes.
+
+     A string swaps the hue segment and keeps the prefix and the shade, for
+     a scale that was renamed: every `bg-violet-500` becomes
+     `bg-accent-500`.
+
+     A map replaces the whole class, for the commoner case of a hue retired
+     in favour of a semantic token that has no shade. It is spelled out per
+     class because the target varies by prefix — the same retired grey
+     becomes an ink token under `text-` and a surface token under `bg-` —
+     and a class the map omits stays a report. */
+  retiredHues: [
+    "indigo",
+    { hue: "violet", to: "accent" },
+    { hue: "slate", to: { "text-slate-600": "text-ink-secondary" } },
+    "purple",
+    "fuchsia",
+  ],
 
   /* And the same colours as literals, which the name rule cannot see. List
      the actual hexes that were in use, not the whole family. */
-  retiredHex: ["#4f46e5", "#4338ca", "#6c63ff", "#a78bfa", "#c4b5fd"],
+  /* `{ hex, to }` here replaces the whole literal, because what a hex
+     should become is a token reference with no prefix or shade to keep. */
+  retiredHex: [
+    { hex: "#4f46e5", to: "var(--accent)" },
+    "#4338ca", "#6c63ff", "#a78bfa", "#c4b5fd",
+  ],
 
   /* `text-[#ff0000]` and friends. A hex is the same value in both themes. */
   banArbitraryColor: true,
@@ -177,7 +207,7 @@ export default {
   radius: {
     banArbitrary: true,
     allowArbitrary: ["^rounded-\\[var\\(--[\\w-]*radius\\)\\]$"],
-    banned: [{ class: "rounded-3xl", why: "Three radii were in use; one is in the law.", detail: "rounded-3xl is not in the law" }],
+    banned: [{ class: "rounded-3xl", to: "rounded-2xl", why: "Three radii were in use; one is in the law.", detail: "rounded-3xl is not in the law" }],
     /* Two tiers, and padding is the tell for which one you are on rather
        than the element: a card rendered as a `<button>` is still a card. */
     tiers: [

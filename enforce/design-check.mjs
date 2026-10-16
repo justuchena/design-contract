@@ -11,12 +11,15 @@
 import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { join, relative, resolve, dirname } from "node:path";
 import { pathToFileURL } from "node:url";
+import { applyFixes, fixAt, addClass } from "./design-fix.mjs";
 
 const argv = process.argv.slice(2);
 const flag = (name) => {
   const i = argv.indexOf(`--${name}`);
   return i === -1 ? null : argv[i + 1];
 };
+const has = (name) => argv.includes(`--${name}`);
+const WRITE = has("fix");
 
 const CWD = process.cwd();
 const configPath = resolve(CWD, flag("config") ?? "design-check.config.mjs");
@@ -161,8 +164,16 @@ for (const [key, name] of Object.entries({
 }
 
 const findings = [];
+const fixes = [];
 const lineAt = (text, index) => text.slice(0, index).split("\n").length;
-const report = (rule, why, place, detail) => findings.push({ rule, why, place, detail });
+/* A finding, and optionally the one rewrite that settles it. The fix is
+   carried on the finding rather than computed later because the rule is the
+   only place that knows which bytes it objected to — recovering that from a
+   printed `file:line` would be a second, worse matcher. */
+const report = (rule, why, place, detail, fix = null) => {
+  findings.push({ rule, why, place, detail, fixable: Boolean(fix) });
+  if (fix) fixes.push(fix);
+};
 
 /* An exemption is a hole unless it is argued and scoped, so each one names a
    path pattern and a reason, and the reason is printed by `--exemptions`.
@@ -285,12 +296,35 @@ if (config.retiredHues?.length) {
   const prefixes = (config.classPrefixes ?? [
     "bg", "text", "border", "ring", "from", "via", "to", "decoration", "shadow", "fill", "stroke",
   ]).join("|");
-  const re = new RegExp(`\\b(?:${prefixes})-(${config.retiredHues.join("|")})-\\d{2,3}\\b`, "g");
+  /* A hue is a bare name, or a name with what replaced it. The second form
+     is what makes the finding fixable, and it is stated in the config
+     because deciding what a retired colour became is the doc's judgement,
+     not the checker's.
+
+     `to` takes two shapes, and the second exists because of a real tree.
+     A string swaps the hue segment and keeps the prefix and the shade, for
+     a scale that was renamed: `bg-violet-500` → `bg-accent-500`. But the
+     commoner case is a hue retired in favour of a *semantic* token with no
+     shade at all — the audit behind this repo replaced `text-slate-600`
+     with `text-ink-secondary`, and a segment swap would have produced
+     `text-ink-secondary-600`, which is not a class. So `to` may instead be
+     a map from the whole class to its replacement. Explicit, because the
+     target varies by prefix: the same retired grey becomes an ink token
+     under `text-` and a surface token under `bg-`, and no rule can infer
+     that. A class the map does not mention stays a report. */
+  const hues = config.retiredHues.map((h) => (typeof h === "string" ? { hue: h } : h));
+  const replacement = new Map(hues.filter((h) => h.to).map((h) => [h.hue, h.to]));
+  const re = new RegExp(
+    `\\b(${prefixes})-(${hues.map((h) => h.hue).join("|")})-(\\d{2,3})\\b`, "g");
   for (const f of files) {
     if (!eligible("palette", f)) continue;
     for (const m of f.code.matchAll(re)) {
+      const to = replacement.get(m[2]);
+      const text =
+        typeof to === "string" ? `${m[1]}-${to}-${m[3]}` : to ? to[m[0]] ?? null : null;
       report("palette", "A retired hue is still in the tree.",
-        `${f.rel}:${lineAt(f.code, m.index)}`, `${m[0]} — ${m[1]} is retired`);
+        `${f.rel}:${lineAt(f.code, m.index)}`, `${m[0]} — ${m[2]} is retired`,
+        fixAt(f, m.index, m.index + m[0].length, text, "palette"));
     }
   }
 }
@@ -301,12 +335,19 @@ if (config.retiredHues?.length) {
 // repo. A hex also cannot follow the theme: it is the same value in light
 // and dark, which is a bug waiting for a dark mode.
 if (config.retiredHex?.length) {
-  const re = new RegExp(`#(?:${config.retiredHex.map((h) => h.replace(/^#/, "")).join("|")})\\b`, "gi");
+  const hexes = config.retiredHex.map((h) => (typeof h === "string" ? { hex: h } : h));
+  /* Here `to` replaces the whole literal, because what a hex should become
+     is a token reference and carries no prefix or shade to preserve. */
+  const replacement = new Map(
+    hexes.filter((h) => h.to).map((h) => [h.hex.replace(/^#/, "").toLowerCase(), h.to]));
+  const re = new RegExp(`#(?:${hexes.map((h) => h.hex.replace(/^#/, "")).join("|")})\\b`, "gi");
   for (const f of files) {
     if (!eligible("palette", f)) continue;
     for (const m of f.code.matchAll(re)) {
+      const to = replacement.get(m[0].slice(1).toLowerCase());
       report("palette", "A retired hue as a literal.",
-        `${f.rel}:${lineAt(f.code, m.index)}`, `${m[0]} — retired, and a literal cannot follow the theme`);
+        `${f.rel}:${lineAt(f.code, m.index)}`, `${m[0]} — retired, and a literal cannot follow the theme`,
+        fixAt(f, m.index, m.index + m[0].length, to ?? null, "palette"));
     }
   }
 }
@@ -381,8 +422,12 @@ if (config.typeRamp) {
     for (const m of f.code.matchAll(/text-\[([0-9.]+)px\]/g)) {
       const to = map[m[1]];
       if (to) {
+        /* The one fix in here that needed no new config: the ramp is
+           already a map from the literal to the class that replaces it, so
+           the rewrite is the rule's own lookup read forwards. */
         report("type", "The ramp owns leading and tracking; a literal owns neither.",
-          `${f.rel}:${lineAt(f.code, m.index)}`, `${m[0]} — the ramp has ${to}`);
+          `${f.rel}:${lineAt(f.code, m.index)}`, `${m[0]} — the ramp has ${to}`,
+          fixAt(f, m.index, m.index + m[0].length, to, "type"));
       }
     }
     if (banStockClasses && stockPattern) {
@@ -415,8 +460,18 @@ if (config.iconScale) {
           `size={${n}} — the ramp is ${sizes.join(" / ")}`);
       }
       if (strokeWidth && stroke && stroke[1] !== String(strokeWidth)) {
+        /* Fixable where the size is not: one stroke width is configured, so
+           there is nothing to choose. A size off the ramp has four
+           candidates and the right one depends on the type beside it, which
+           is the blind spot this rule already prints. */
+        /* The attribute blob ends two characters before the match does,
+           at the `/>`, which is the one way to locate it that does not
+           depend on searching for a substring that may occur twice. */
+        const blobAt = m.index + m[0].length - 2 - m[1].length;
+        const at = blobAt + m[1].indexOf(stroke[0]);
         report("icon", "One stroke width, or the set stops reading as one set.", place,
-          `strokeWidth={${stroke[1]}} at size ${n} — the ramp is ${strokeWidth}`);
+          `strokeWidth={${stroke[1]}} at size ${n} — the ramp is ${strokeWidth}`,
+          fixAt(f, at, at + stroke[0].length, `strokeWidth={${strokeWidth}}`, "icon"));
       }
     }
   }
@@ -448,8 +503,15 @@ for (const ban of config.copyBans ?? []) {
   for (const f of files) {
     if (f.file.endsWith(".css")) continue;
     if (!eligible("copy", f)) continue;
+    /* No fix, deliberately, and this one was decided by evidence rather
+       than taste. Four em dashes in a real tree were each repaired a
+       different way: a colon, a comma, a middot, and one simply deleted.
+       A ban names a prohibition, not a target, so the substitute is a
+       sentence-level decision every time and a default would have been
+       wrong three times in four. */
     for (const m of f.code.matchAll(re)) {
-      report("copy", ban.why, `${f.rel}:${lineAt(f.code, m.index)}`, ban.detail ?? `${m[0]} is banned in copy`);
+      report("copy", ban.why, `${f.rel}:${lineAt(f.code, m.index)}`,
+        ban.detail ?? `${m[0]} is banned in copy`);
     }
   }
 }
@@ -549,7 +611,8 @@ if (config.radius) {
     for (const ban of banned) {
       for (const m of f.code.matchAll(new RegExp(`\\b${ban.class}\\b`, "g"))) {
         report("radius", ban.why ?? "A radius outside the law.",
-          `${f.rel}:${lineAt(f.code, m.index)}`, ban.detail ?? `${ban.class} is not in the law`);
+          `${f.rel}:${lineAt(f.code, m.index)}`, ban.detail ?? `${ban.class} is not in the law`,
+          fixAt(f, m.index, m.index + m[0].length, ban.to ?? null, "radius"));
       }
     }
     /* A container radius on a control, or a control radius on a container,
@@ -817,9 +880,16 @@ if (config.flexShrink) {
       for (const axis of axes) {
         const a = AXIS[axis];
         if (!a || !a.overflow.test(cls) || new RegExp(`\\b${a.fix}\\b`).test(cls)) continue;
+        /* The only fix here that adds rather than replaces, and the rule
+           already named it. An expression the class matcher cannot find a
+           quoted body in — a bare `{clsx(...)}` call — yields no fix and
+           stays a finding. */
+        const add = addClass(cls, a.fix);
+        const at = add && m.index + add.offset;
         report("layout", "A flex child defaults to min-content and will not shrink below it.",
           `${f.rel}:${lineAt(f.code, m.index)}`,
-          `a flex-1 scroller with no ${a.fix} — it grows past its frame, and an h-full child grows a second scrollbar inside it`);
+          `a flex-1 scroller with no ${a.fix} — it grows past its frame, and an h-full child grows a second scrollbar inside it`,
+          add ? fixAt(f, at, at, add.text, "layout") : null);
       }
     }
   }
@@ -865,6 +935,35 @@ if (!findings.length) {
   process.exit(0);
 }
 
+/* ── --fix ──────────────────────────────────────────────────────────────
+   Applied before the report, so what prints afterwards is what is left
+   rather than what was found. A fixer that writes the file and then prints
+   the findings it just resolved teaches people to ignore the output. */
+if (WRITE) {
+  if (!fixes.length) {
+    console.error(`\n✗ design-check: ${findings.length} finding(s), none of them mechanical.\n`);
+    console.error("Every one of these needs a decision. Run without --fix to read them.\n");
+    process.exit(1);
+  }
+  const { applied, conflicted } = applyFixes(fixes);
+  const touched = new Set(applied.map((x) => x.rel));
+  console.error(`\n✎ design-check --fix: ${applied.length} fix(es) in ${touched.size} file(s)`);
+  const byFixRule = new Map();
+  for (const x of applied) byFixRule.set(x.rule, (byFixRule.get(x.rule) ?? 0) + 1);
+  for (const [rule, n] of byFixRule) console.error(`     ${rule} (${n})`);
+  if (conflicted.length) {
+    console.error(`\n  ${conflicted.length} overlapping fix(es) left alone:`);
+    for (const x of conflicted) console.error(`     ${x.rel}  ${x.rule}`);
+    console.error("  Two rules wanted the same bytes, so the doc disagrees with itself there.");
+  }
+  const left = findings.length - applied.length;
+  console.error(`\n  ${left} finding(s) still need a decision. Re-run to read them.`);
+  /* Look at it. A fix that satisfies a rule and moves the page is still
+     wrong, and no rule in here can tell you which happened. */
+  console.error("  Diff it, and screenshot the routes you changed before trusting any of this.\n");
+  process.exit(left ? 1 : 0);
+}
+
 const byRule = new Map();
 for (const x of findings) byRule.set(x.rule, [...(byRule.get(x.rule) ?? []), x]);
 
@@ -882,12 +981,20 @@ for (const [rule, list] of byRule) {
   for (const x of list) byWhy.set(x.why, [...(byWhy.get(x.why) ?? []), x]);
   for (const [why, group] of byWhy) {
     console.error(`     ${why}`);
-    for (const x of group.slice(0, LIMIT)) console.error(`       ${x.place}  ${x.detail}`);
+    /* The mark says a rewrite is waiting, not that the finding is lesser.
+       Without it the only way to learn what --fix would touch is to run it
+       on a dirty tree, which is the worst possible time to find out. */
+    for (const x of group.slice(0, LIMIT))
+      console.error(`       ${x.place}  ${x.detail}${x.fixable ? "  [--fix]" : ""}`);
     if (group.length > LIMIT) console.error(`       … and ${group.length - LIMIT} more`);
   }
   const limits = limitsFor.get(rule);
   if (limits) console.error(`     cannot tell: ${limits}`);
   console.error("");
+}
+if (fixes.length) {
+  console.error(`${fixes.length} of ${findings.length} are marked [--fix]: the target is already in the config, so the rewrite carries no judgement.`);
+  console.error("Run `design-check --fix` to apply those. The rest need a decision.\n");
 }
 console.error(`${config.docPath ?? "DESIGN.md"} has the reasoning for each of these.`);
 console.error(`${held.length} of ${RULES.length} rules on${off.length ? `; off: ${off.join(", ")}` : ""}.\n`);

@@ -15,11 +15,25 @@ export default {
   skipDirs: ["node_modules", "dist", "build", "__tests__", ".next"],
 
   /* Colours the doc retired. The names, for utility classes. */
-  retiredHues: ["indigo", "violet", "purple", "fuchsia"],
+/* A bare name reports. A name with what replaced it also fixes, and `to`
+     has two shapes. A string swaps the hue segment and keeps prefix and
+     shade, for a renamed scale. A map replaces the whole class, for a hue
+     retired in favour of a semantic token with no shade — the shape the
+     real audit needed, where `text-slate-600` became `text-ink-secondary`
+     and a segment swap would have written `text-ink-secondary-600`. */
+  retiredHues: [
+    "indigo",
+    { hue: "violet", to: "accent" },
+    { hue: "purple", to: { "text-purple-700": "text-ink-secondary" } },
+    "fuchsia",
+  ],
 
   /* And the same colours as literals, which the name rule cannot see. List
      the actual hexes that were in use, not the whole family. */
-  retiredHex: ["#4f46e5", "#4338ca", "#6c63ff", "#a78bfa", "#c4b5fd"],
+  retiredHex: [
+    { hex: "#4f46e5", to: "var(--accent)" },
+    "#4338ca", "#6c63ff", "#a78bfa", "#c4b5fd",
+  ],
 
   /* `text-[#ff0000]` and friends. A hex is the same value in both themes. */
   banArbitraryColor: true,
@@ -139,7 +153,7 @@ export default {
   radius: {
     banArbitrary: true,
     allowArbitrary: ["^rounded-\\[var\\(--[\\w-]*radius\\)\\]$"],
-    banned: [{ class: "rounded-3xl", why: "Three radii were in use; one is in the law.", detail: "rounded-3xl is not in the law" }],
+    banned: [{ class: "rounded-3xl", to: "rounded-2xl", why: "Three radii were in use; one is in the law.", detail: "rounded-3xl is not in the law" }],
     /* Two tiers, and padding is the tell for which one you are on rather
        than the element: a card rendered as a `<button>` is still a card. */
     tiers: [

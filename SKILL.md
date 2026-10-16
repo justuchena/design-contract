@@ -116,6 +116,24 @@ cp enforce/design-check.config.example.mjs design-check.config.mjs
 node enforce/design-check.mjs
 ```
 
+Findings marked `[--fix]` have the rewrite already stated in the config, and
+`node enforce/design-check.mjs --fix` applies those and only those. Run it on
+a clean tree so the diff is readable, and read that diff: it is the record of
+what was changed on your behalf. Everything unmarked needs a decision — make
+it in the design doc first, then in the code, because a fix with no sentence
+behind it is the drift this repo exists to catch, arriving through the tool
+meant to catch it.
+
+If the app runs, prefer the gate, which folds step 4 into the same command:
+
+```bash
+node pipeline/fix-gate.mjs --base http://localhost:5173 --routes / /pricing
+```
+
+It shoots the app, applies the fixes, shoots it again and reports what moved,
+with a mask per changed screenshot. It exits non-zero whenever anything moved
+at all — that is not a failure, it is the instruction to look.
+
 19 rules, in two halves. What a surface **looks like**: retired hues by
 name and by hex, arbitrary colour classes, element-scoped bans (pure-white
 plates, hard seams between sections), measured contrast floors, the type
@@ -212,11 +230,14 @@ three you are not, in your design doc's reference section.
 | `method/references.md` | Structure vs device. Read before using any reference. |
 | `method/voice.md` | The two standing copy rules. |
 | `method/states.md` | The four branches, and whether the interface is honest. |
-| `enforce/design-check.mjs` | The checker. |
+| `enforce/design-check.mjs` | The checker. `--fix` applies the mechanical findings. |
+| `enforce/design-fix.mjs` | What a fix is, and the two rules for what belongs in one. |
 | `enforce/design-check.config.example.mjs` | Every rule, annotated, off by default. |
 | `pipeline/contrast.mjs` | Contrast matrix, scoped per ground. |
 | `pipeline/derive.mjs` | `tokens.css` → Design Tokens JSON. |
 | `pipeline/shots.mjs` | Screenshot a running app at several widths. |
+| `pipeline/fix-gate.mjs` | Shoot, fix, shoot again, report what moved. |
+| `pipeline/visual-diff.mjs` | Compare two directories of screenshots. |
 | `refs/` | 152 design-system packages. `refs/INDEX.md` first. |
 | `examples/meridian/` | A filled-in design doc, with real measurements. |
 | `resources/README.md` | Icons, fonts, illustration, tooling. Licence noted per entry. |

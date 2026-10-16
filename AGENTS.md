@@ -78,8 +78,21 @@ worse than no undo.
 
 ```bash
 node enforce/design-check.mjs        # needs a design-check.config.mjs
+node enforce/design-check.mjs --fix  # only the findings marked [--fix]
 node pipeline/contrast.mjs <palette.json>
 ```
+
+`--fix` applies the rewrites the config already states and leaves the rest.
+Run it on a clean tree and read the diff — do not report work done on the
+strength of a fixer's own summary. When the app runs, use the gate instead,
+which shoots the app either side of the fix and reports what moved:
+
+```bash
+node pipeline/fix-gate.mjs --base <url> --routes / /pricing
+```
+
+It exits non-zero whenever anything moved. That is the instruction to look at
+the masks it wrote, not a failure.
 
 Then **render it and look at it**, narrow width first
 (`node pipeline/shots.mjs --base <url> --routes /`). A design doc cannot tell
@@ -118,7 +131,10 @@ A lane you did not choose is slop even when the lane is beautiful.
 floors, and the interaction rules a machine can decide: the focus indicator,
 pointer targets, accessible names on icon-only controls, hover-only
 affordances, unguarded animation, fields, raw images, hand-rolled shells and
-the `flex-1` shrink fault. It deliberately does **not** check composition,
+the `flex-1` shrink fault. `--fix` settles only the findings whose target the
+config names; it will never invent an accessible name, choose between two
+allowed values, or answer a contrast failure. It deliberately does **not**
+check composition,
 hierarchy or taste — and it cannot check whether an empty state would be a
 lie on failure, which is why the states rules are read rather than run.
 

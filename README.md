@@ -44,7 +44,7 @@ cd enforce/fixture && node ../design-check.mjs
 | [`method/`](method/) | How to write a design doc that does not rot, and how to use a reference without copying it |
 | [`refs/`](refs/) | 152 design-system packages: prose contract, tokens, Tailwind theme, rendered fixtures |
 | [`enforce/`](enforce/) | A configurable checker for the rules a machine can hold, and nothing else |
-| [`pipeline/`](pipeline/) | Contrast matrix, token mirror, screenshot loop |
+| [`pipeline/`](pipeline/) | Contrast matrix, token mirror, screenshot loop, visual diff |
 | [`examples/meridian/`](examples/meridian/) | A complete filled-in design doc, with really measured numbers |
 | [`resources/`](resources/) | Icons, typefaces, illustration, tooling — licence noted per entry |
 | [`SKILL.md`](SKILL.md) · [`AGENTS.md`](AGENTS.md) | Agent entry points — plugin, skill, or any other agent |
@@ -179,6 +179,29 @@ node enforce/design-check.mjs
        src/row.tsx:32  icon-only <button> with no accessible name
 ```
 
+Six of those findings carry the rewrite that settles them, marked `[--fix]`,
+and `node enforce/design-check.mjs --fix` applies exactly those:
+
+```
+✎ design-check --fix: 6 fix(es) in 2 file(s)
+  25 finding(s) still need a decision. Re-run to read them.
+  Diff it, and screenshot the routes you changed before trusting any of this.
+```
+
+The test for whether a finding is fixable is one sentence: **the design doc
+already states the target.** The ramp maps `14` to `text-sm`, so rewriting
+`text-[14px]` carries no judgement. The disabled pair is *two* allowed
+values, so choosing one does, and that finding stays a finding. Nothing in
+there invents an accessible name — a fixer that writes a label ships a wrong
+label, and a wrong label is worse than a missing one because the checker then
+goes quiet.
+
+And because a fix that satisfies a rule can still move the page,
+[`pipeline/fix-gate.mjs`](pipeline/fix-gate.mjs) shoots the app, applies the
+fixes, shoots it again and tells you what moved — exiting non-zero whenever
+anything did, so a CI lane cannot carry a visual change through on a green
+tick. A changed page is not a failure. An unexamined one is.
+
 **19 rules, in two halves.** What a surface *looks like*: retired hues by
 name and by hex, arbitrary colour classes, flat bans, element-scoped bans,
 measured contrast floors, the type ramp, the icon scale, the disabled pair,
@@ -230,6 +253,10 @@ rule at once.
 
 </details>
 
+> **Never add a fix you cannot trace to a target the config already names.**
+> The same argument as the rule above it: a rewrite with no decision behind
+> it is the checker having an opinion about your product.
+
 > **Never add a rule you cannot trace to a section of your design doc.** A
 > rule with no argument behind it gets deleted the first time it is
 > inconvenient, and that is the correct outcome.
@@ -250,6 +277,9 @@ node pipeline/derive.mjs src/styles/tokens.css --check
 
 # screenshot a running app, narrow first
 node pipeline/shots.mjs --base http://localhost:5173 --routes / /pricing
+
+# shoot, apply the mechanical fixes, shoot again, and say what moved
+node pipeline/fix-gate.mjs --base http://localhost:5173 --routes / /pricing
 ```
 
 `contrast.mjs` exists for one finding that single-ground tools never see:
@@ -375,7 +405,7 @@ licence corrections to [`resources/`](resources/), and a second worked
 example for a different kind of product.
 
 ```bash
-npm run verify    # 23 assertions, the token mirror, and the commit convention
+npm run verify    # both suites, the token mirror, the skill mirror, the commit convention
 ```
 
 Commits follow [Conventional Commits](https://www.conventionalcommits.org) —

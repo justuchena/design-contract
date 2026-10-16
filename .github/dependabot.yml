@@ -1,0 +1,25 @@
+# This repo ships no runtime dependencies, so the drift worth watching is in
+# the two places a reader never looks: pinned action versions in a workflow,
+# and the mutation-testing devDependency.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: "chore(ci)"
+
+  # devDependencies only, and grouped: @stryker-mutator ships its packages in
+  # lockstep, so separate PRs per package would never pass on their own.
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: monthly
+    allow:
+      - dependency-type: development
+    groups:
+      stryker:
+        patterns: ["@stryker-mutator/*"]
+    commit-message:
+      prefix: "chore(deps)"

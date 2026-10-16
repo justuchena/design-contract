@@ -130,6 +130,12 @@ when a real area appears — not a vague one.
 
 **`!` before the colon** for a breaking change: `chore(repo)!: …`.
 
+One published commit is exempt, named in `EXEMPT` in the checker: `6510c278`
+used the scope `readme`, which is not in the list, and `main` is protected
+against a force-push, so it cannot be amended. It is named rather than fixed
+by widening the scope list to fit it — a mistake absorbed into the convention
+stops being a mistake, and the list would stop meaning anything.
+
 The rules the check enforces:
 
 - The subject matches the format, with a known type and scope.

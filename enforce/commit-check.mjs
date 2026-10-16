@@ -52,6 +52,17 @@ const SCOPES = [
   "examples", "resources", "skill", "licence", "deps", "ci",
 ];
 
+/* One published commit fails this check and cannot be fixed. 6510c278 used
+   the scope `readme`, which is not in the list above, and `main` is protected
+   against a force-push, so amending it is not available — correctly, since a
+   protection that bends for the maintainer is not one. The scope should have
+   been `repo`. Naming it here keeps `--range all` honest in both directions:
+   the check stays green on a history it cannot change, and the mistake stays
+   visible instead of being absorbed by widening SCOPES to fit it. */
+const EXEMPT = {
+  "6510c278215b766cf98d57e4ac70a2b287afc3c1": 'scope "readme" should have been "repo"',
+};
+
 const SUBJECT = /^(?<type>[a-z]+)(?:\((?<scope>[a-z0-9,\-/]+)\))?(?<breaking>!)?: (?<subject>.+)$/;
 
 const messages = [];
@@ -81,6 +92,10 @@ if (file) {
   for (const entry of raw.split("\x1e")) {
     if (!entry.trim()) continue;
     const [sha, text] = entry.replace(/^\n/, "").split("\x00");
+    if (EXEMPT[sha]) {
+      console.log(`⚠  ${sha.slice(0, 8)}  exempt: ${EXEMPT[sha]}`);
+      continue;
+    }
     messages.push({ sha: sha.slice(0, 8), text });
   }
   if (!messages.length) console.log(`commit-check: no commits in ${spec}`);

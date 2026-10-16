@@ -1,6 +1,6 @@
 # `pipeline/`
 
-Three scripts and two typefaces. Each script exists because of a specific
+Six scripts and two typefaces. Each script exists because of a specific
 mistake it prevents.
 
 ## `contrast.mjs`
@@ -97,6 +97,80 @@ npm i -D playwright && npx playwright install chromium
 
 For screens behind a login, `--cookie-file path --cookie-name authToken`
 reads the token from a file so it never lands in shell history.
+
+## `fix-gate.mjs`
+
+```bash
+node pipeline/fix-gate.mjs --base http://localhost:5173 --routes / /pricing
+```
+
+Shoots the app, runs `design-check --fix`, shoots it again, and says what
+moved.
+
+It exists because `--fix` can only ever satisfy a rule. Whether the page
+still says what it said before is a different question, and no rule in this
+repo can answer it — `min-h-0` is *supposed* to change the layout, and a
+retired hue swapped for a token is supposed to change the colour. So the gate
+has no opinion about whether a change was right. Its whole job is that nobody
+reports the work done without seeing it:
+
+```
+── what moved ──
+
+  index-390.png                unchanged
+  pricing-390.png              10.04% of pixels (24096)
+  apply-1440.png               1440×2210 → 1440×1612, the page changed size
+
+7 fix(es) applied. 2 of 6 screenshot(s) moved.
+Masks in .fix-gate/diff/ — the marked pixels are the ones that moved.
+Exit 1 because something moved, not because something broke.
+```
+
+Three properties that matter:
+
+**The "before" shots are taken first.** So a missing browser aborts the run
+with the tree untouched — the gate never rewrites code it could not
+photograph. A test asserts the ordering, because getting it backwards would
+leave a diff whose effect nobody can see.
+
+**A page that changed size is reported as that, not as a percentage.** It is
+the strongest signal available and needs no number beside it.
+
+**It exits non-zero whenever anything moved at all.** Not because the change
+is wrong, but so a CI lane cannot carry a visual change through on a green
+tick. A changed page is not a failure; an unexamined one is.
+
+## `visual-diff.mjs`
+
+```bash
+node pipeline/visual-diff.mjs .fix-gate/before .fix-gate/after --diff .fix-gate/diff
+```
+
+The comparison on its own, for any two directories of screenshots: two
+branches, two themes, before and after any change at all. It is a separate
+script for a second reason as well — a comparison that needs a running
+browser to test is a comparison that does not get tested, and this one is
+covered by nineteen assertions over synthetic images.
+
+The default pixel threshold is a channel delta of 8, which is the band that
+two runs of the same browser differ by on font rasterisation. Raising it is
+how you stop seeing a one-step colour token swap, which is the change this
+most needs to catch.
+
+## `png.mjs`
+
+Enough PNG to compare two screenshots: one inflate and five row filters,
+over `node:zlib`. Not a general decoder, and that is the point — 16-bit
+samples, a palette and Adam7 interlacing are all legal PNG, none of them come
+out of a browser screenshot, and each one throws by name rather than being
+half-handled. A decoder that silently mangles an unexpected format would
+report a visual change that is not there, which is the one thing a gate must
+never do.
+
+It is here rather than in `package.json` because this repo's answer to a
+dependency is the same every time: a hundred lines that work on every Node
+there has ever been are cheaper than being wrong about a version table twice.
+Validated by round-tripping real screenshots from three different encoders.
 
 ## `fonts/`
 

@@ -145,6 +145,20 @@ check("the before shots are taken before the fix is applied",
   "a missing browser must abort with the tree untouched");
 check("a missing browser aborts rather than continuing",
   /if \(e\.status === 2\) process\.exit\(2\)/.test(gate));
+/* The first live run of the gate failed exactly here: the checker reports to
+   stderr, execFileSync returns only stdout, and with nothing left to decide
+   it exits 0 — so the gate rewrote a file, read an empty stream, concluded
+   nothing had happened and exited green without taking the after shots. */
+check("the fix summary is read from both streams",
+  /run\.stdout \?\? ""\}\$\{run\.stderr \?\? ""/.test(gate),
+  "a silent stream must never be read as no work done");
+check("no fix summary is treated as unknown rather than as nothing",
+  /printed no fix summary/.test(gate) && /process\.exit\(2\)/.test(gate));
+/* Also found live: the rewritten class was 7,500px down an 18,000px page, so
+   the viewport shots called every route unchanged while a colour had moved. */
+check("the shots are full-page unless opted out",
+  /if \(!argv\.includes\("--viewport-only"\)\) passthrough\.push\("--full"\)/.test(gate),
+  "a gate that only sees the first screen is another silent pass");
 
 console.log("");
 if (failures.length) {

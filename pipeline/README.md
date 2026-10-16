@@ -126,12 +126,17 @@ Masks in .fix-gate/diff/ — the marked pixels are the ones that moved.
 Exit 1 because something moved, not because something broke.
 ```
 
-Three properties that matter:
+Four properties that matter:
 
 **The "before" shots are taken first.** So a missing browser aborts the run
 with the tree untouched — the gate never rewrites code it could not
 photograph. A test asserts the ordering, because getting it backwards would
 leave a diff whose effect nobody can see.
+
+**It shoots the full page, not the viewport** — the opposite of
+`shots.mjs`, and the default rather than a flag. A fix lands wherever the
+class it rewrote happens to be. `--viewport-only` opts out when a
+full-height capture is the slow part.
 
 **A page that changed size is reported as that, not as a percentage.** It is
 the strongest signal available and needs no number beside it.
@@ -139,6 +144,19 @@ the strongest signal available and needs no number beside it.
 **It exits non-zero whenever anything moved at all.** Not because the change
 is wrong, but so a CI lane cannot carry a visual change through on a green
 tick. A changed page is not a failure; an unexamined one is.
+
+Two of those four are in the shape they are because of the first live run
+against a real app, and both were the same bug wearing different clothes — a
+silent pass:
+
+| What went wrong | Why |
+|---|---|
+| The gate rewrote a file, then reported "nothing was rewritten", skipped the after shots and exited 0 | The checker prints its report to stderr, and `execFileSync` returns only stdout. With nothing left to decide it exits 0, so there was no exception to read stderr from. It reads both streams now, and a missing summary is treated as *unknown* rather than as nothing. |
+| With the fix applied, every route reported unchanged although a colour had plainly moved | The rewritten class was 7,500px down an 18,000px landing page, and the shots were viewport-only. Full page is now the default. |
+
+Neither was reachable from the fixture, and neither would have been caught by
+a test that mocked the browser. A gate whose failure mode is a green tick has
+to be run against something real before it is trusted.
 
 ## `visual-diff.mjs`
 

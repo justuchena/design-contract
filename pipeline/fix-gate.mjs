@@ -23,7 +23,7 @@
  *
  * Requires playwright, same as pipeline/shots.mjs.
  */
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import { join, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -59,7 +59,14 @@ for (const name of ["routes", "widths"]) {
   const v = list(name);
   if (v) passthrough.push(`--${name}`, ...v);
 }
-if (argv.includes("--full")) passthrough.push("--full");
+/* Full page by default, which is the opposite of shots.mjs and deliberate.
+   A fix lands wherever the class it rewrote happens to be, and on the first
+   live run of this gate that was 7,500px down an 18,000px landing page: the
+   viewport shots reported every route unchanged while a colour had plainly
+   moved. A gate that only sees the first screen is the same silent pass as
+   reading an empty stream as no work done. `--viewport-only` opts out for a
+   page where the full-height capture is the slow part. */
+if (!argv.includes("--viewport-only")) passthrough.push("--full");
 
 const shoot = (into, when) => {
   mkdirSync(into, { recursive: true });
@@ -84,19 +91,30 @@ console.log("\n── applying the mechanical fixes ──");
 const checkArgs = [join(HERE, "..", "enforce", "design-check.mjs"), "--fix"];
 const config = arg("config");
 if (config) checkArgs.push("--config", config);
-let fixOutput = "";
-try {
-  fixOutput = execFileSync(process.execPath, checkArgs, { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
-} catch (e) {
-  fixOutput = `${e.stdout ?? ""}${e.stderr ?? ""}`;
-  if (e.status === 2) {
-    console.error(fixOutput);
-    process.exit(2);
-  }
+/* Both streams, and spawnSync rather than execFileSync, because the checker
+   prints its report to stderr and execFileSync returns only stdout. The
+   first live run of this gate rewrote a file, read an empty stdout, said
+   "nothing was rewritten", skipped the after shots and exited 0 — a visual
+   change carried through on a green tick, which is the one outcome this
+   whole script exists to prevent. Read both, and never infer "no work" from
+   a silent stream. */
+const run = spawnSync(process.execPath, checkArgs, { encoding: "utf8" });
+const fixOutput = `${run.stdout ?? ""}${run.stderr ?? ""}`;
+if (run.status === 2) {
+  console.error(fixOutput);
+  process.exit(2);
 }
 console.log(fixOutput.trim());
 
-const applied = Number(fixOutput.match(/(\d+) fix\(es\)/)?.[1] ?? 0);
+const match = fixOutput.match(/(\d+) fix\(es\)/);
+if (!match) {
+  /* No summary at all means the checker did not get far enough to print one,
+     so whether anything was rewritten is unknown. Unknown is not "no". */
+  console.error("\nThe checker printed no fix summary, so the tree may or may not have changed.");
+  console.error("Shoot it yourself before trusting it: pipeline/shots.mjs, then visual-diff.mjs.\n");
+  process.exit(2);
+}
+const applied = Number(match[1]);
 if (!applied) {
   console.log("\nNothing was rewritten, so there is nothing to look at.");
   process.exit(0);

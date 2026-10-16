@@ -420,6 +420,23 @@ redistributed unmodified, and keeping them that way is what makes
 
 ---
 
+## Related
+
+[frontend-contract](https://github.com/justuchena/frontend-contract) — the same
+posture applied to how an interface is *built* rather than how it looks:
+twelve rules four independently maintained production frontends already agree
+on, the evidence for each read at source, and a zero-dependency checker that
+holds all twelve.
+
+It takes the opposite line on authority, deliberately. This pack is
+config-first — your design doc governs, and a rule that cannot name a section
+of it is a preference — which serves a project that has already made
+decisions. That one is prescriptive and zero-config, because someone building
+a frontend with an agent has made none, and that is the whole reason the output
+drifts. Two authorities, one body of work.
+
+---
+
 ## The name
 
 This repo was called `no-ai-slop` until 15 October 2026, and the old URL

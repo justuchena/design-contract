@@ -9,11 +9,6 @@ the rules a machine can hold.**
 For anyone building frontends with an AI agent and getting back work that is
 locally plausible and globally incoherent.
 
-*Renamed from `no-ai-slop` on 15 October 2026. The old URL redirects. The
-name is now taken by three unrelated projects, one of them three months older
-and far better known, and a name that says what a thing is beats one that
-says what it is against.*
-
 [![licence: Apache-2.0](https://img.shields.io/badge/licence-Apache--2.0-blue.svg)](LICENSE)
 [![node](https://img.shields.io/badge/node-%E2%89%A518-brightgreen.svg)](package.json)
 [![dependencies: none](https://img.shields.io/badge/dependencies-none-brightgreen.svg)](package.json)
@@ -392,3 +387,17 @@ Please do not send PRs editing the contents of `refs/` — those packages are
 redistributed unmodified, and keeping them that way is what makes
 [`NOTICE`](NOTICE) accurate. Fixes belong
 [upstream](https://github.com/nexu-io/open-design).
+
+---
+
+## The name
+
+This repo was called `no-ai-slop` until 15 October 2026, and the old URL
+redirects.
+
+I renamed it because the old name was held by three unrelated projects, one of
+them three months older and far better known, so searching for it found
+somebody else's work. And because a name that says what a thing *is* beats one
+that says what it is *against* — which is the same argument
+[`method/references.md`](method/references.md) makes about deriving a design
+from your own product rather than borrowing a device.

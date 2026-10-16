@@ -28,7 +28,7 @@ jobs:
         # and a version table is not something a design tool should bet on.
         node: [18, 20, 22, 24]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-node@v4
         with:
@@ -58,7 +58,7 @@ jobs:
   commits:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           # The default shallow clone has no base to compare against, so a
           # range check would silently pass by reading nothing.
@@ -78,7 +78,7 @@ jobs:
   links:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Every relative link in the docs resolves
         # A pack whose own cross-references 404 teaches nobody anything, and
         # SKILL.md's links broke once already when it moved to the root.
